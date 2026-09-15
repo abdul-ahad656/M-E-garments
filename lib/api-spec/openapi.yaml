@@ -1,0 +1,1042 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: M&E Garments storefront and shopping-assistant API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: storefront
+  - name: assistant
+  - name: account
+  - name: admin
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /storefront/status:
+    get:
+      operationId: getStorefrontStatus
+      tags: [storefront]
+      summary: Get commerce integration readiness
+      responses:
+        "200":
+          description: Current storefront service status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontStatus"
+  /storefront/home:
+    get:
+      operationId: getStorefrontHome
+      tags: [storefront]
+      summary: Get real Shopify-powered homepage merchandising
+      responses:
+        "200":
+          description: Homepage catalog content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontHome"
+        "503":
+          description: Shopify is not connected or temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /storefront/search:
+    get:
+      operationId: searchProducts
+      tags: [storefront]
+      summary: Search the live Shopify catalog
+      parameters:
+        - name: query
+          in: query
+          schema: { type: string, maxLength: 200 }
+        - name: collection
+          in: query
+          schema: { type: string }
+        - name: age
+          in: query
+          schema: { type: string }
+        - name: occasion
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        "200":
+          description: Matching real products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductSearchResult"
+        "503":
+          description: Shopify is not connected or temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /storefront/products/{handle}:
+    get:
+      operationId: getProduct
+      tags: [storefront]
+      summary: Get a live Shopify product by handle
+      parameters:
+        - name: handle
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      responses:
+        "200":
+          description: Product detail from Shopify
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetail"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is not connected or temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /storefront/cart:
+    get:
+      operationId: getCart
+      tags: [storefront]
+      summary: Get a Shopify cart
+      parameters:
+        - name: cartId
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Current Shopify cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "404":
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    post:
+      operationId: createCart
+      tags: [storefront]
+      summary: Create a Shopify cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartCreateInput"
+      responses:
+        "201":
+          description: Created Shopify cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Invalid cart line
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /storefront/cart/lines:
+    post:
+      operationId: addCartLine
+      tags: [storefront]
+      summary: Add a verified variant to a Shopify cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartLineAddInput"
+      responses:
+        "200":
+          description: Updated Shopify cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Invalid cart line
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateCartLine
+      tags: [storefront]
+      summary: Update a Shopify cart line quantity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartLineUpdateInput"
+      responses:
+        "200":
+          description: Updated Shopify cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Invalid cart line
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /storefront/cart/lines/remove:
+    post:
+      operationId: removeCartLine
+      tags: [storefront]
+      summary: Remove a line from a Shopify cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartLineRemoveInput"
+      responses:
+        "200":
+          description: Updated Shopify cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Invalid cart line
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /assistant/query:
+    post:
+      operationId: queryShoppingAssistant
+      tags: [assistant]
+      summary: Ask the grounded M&E shopping assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantQueryInput"
+      responses:
+        "200":
+          description: Grounded assistant response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantResponse"
+        "400":
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: AI or Shopify is not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /account/profile:
+    get:
+      operationId: getCustomerProfile
+      tags: [account]
+      summary: Get the authenticated customer's profile
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Customer profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerProfile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      operationId: updateCustomerProfile
+      tags: [account]
+      summary: Update the authenticated customer's profile
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerProfileInput" }
+      responses:
+        "200":
+          description: Updated customer profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerProfile" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /account/wishlist:
+    get:
+      operationId: listWishlistItems
+      tags: [account]
+      summary: List the authenticated customer's wishlist
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SavedProductReference" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      operationId: saveWishlistItem
+      tags: [account]
+      summary: Add or refresh an item in the authenticated customer's wishlist
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductReferenceInput" }
+      responses:
+        "200":
+          description: Saved wishlist item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedProductReference" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      operationId: deleteWishlistItem
+      tags: [account]
+      summary: Remove an item from the authenticated customer's wishlist
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: shopifyProductId
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204": { description: Wishlist item removed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /account/recently-viewed:
+    get:
+      operationId: listRecentlyViewedItems
+      tags: [account]
+      summary: List the authenticated customer's recently viewed products
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Recently viewed items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ViewedProductReference" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      operationId: saveRecentlyViewedItem
+      tags: [account]
+      summary: Record a product view for the authenticated customer
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductReferenceInput" }
+      responses:
+        "200":
+          description: Recorded product view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ViewedProductReference" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /account/orders:
+    get:
+      operationId: listCustomerOrders
+      tags: [account]
+      summary: Look up live Shopify orders using the authenticated customer's Clerk primary email
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Live Shopify order references
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrderReference" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: The authenticated Clerk primary email is unavailable or unverified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin order lookup is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /account/orders/{orderId}:
+    get:
+      operationId: getCustomerOrder
+      tags: [account]
+      summary: Get one live Shopify order owned by the authenticated customer
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[0-9]+$", minLength: 1, maxLength: 32 }
+      responses:
+        "200":
+          description: Live Shopify order details and fulfillment tracking
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Order not found for the authenticated customer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "422":
+          description: The authenticated Clerk primary email is unavailable or unverified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin order lookup is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/catalog-health:
+    get:
+      operationId: getAdminCatalogHealth
+      tags: [admin]
+      summary: Pull and assess the live Shopify catalog
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Live catalog health and synchronization state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCatalogHealth" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: Shopify is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/session:
+    get:
+      operationId: getAdminSession
+      tags: [admin]
+      summary: Confirm the current Clerk user has staff access
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Authorized staff session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSession" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/staff:
+    get:
+      operationId: listAdminStaff
+      tags: [admin]
+      summary: List users and their dashboard access for an owner
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Clerk users and current dashboard roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminStaffMember" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/staff/{userId}:
+    patch:
+      operationId: updateAdminStaffAccess
+      tags: [admin]
+      summary: Grant or revoke staff access as an owner
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminStaffAccessUpdate" }
+      responses:
+        "200":
+          description: Updated staff member
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStaffMember" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Clerk user not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/policies:
+    get:
+      operationId: listAdminPolicies
+      tags: [admin]
+      summary: List policy and sizing content
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Policy documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PolicyDocument" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/policies/{slug}:
+    put:
+      operationId: saveAdminPolicy
+      tags: [admin]
+      summary: Draft, submit for review, or publish policy and sizing content
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-z0-9-]+$", minLength: 1, maxLength: 80 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolicyDocumentInput" }
+      responses:
+        "200":
+          description: Saved policy document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolicyDocument" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Summarize recorded analytics events without inferred metrics
+      security: [{ ClerkSession: [] }]
+      responses:
+        "200":
+          description: Recorded event summary and unavailable metrics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAnalytics" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+components:
+  securitySchemes:
+    ClerkSession:
+      type: apiKey
+      in: cookie
+      name: __session
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    Forbidden:
+      description: Staff access required
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+    ApiError:
+      type: object
+      properties:
+        error: { type: string }
+        code: { type: string }
+      required: [error, code]
+    CatalogIssue:
+      type: object
+      properties:
+        productId: { type: string }
+        handle: { type: string }
+        title: { type: string }
+        problems:
+          type: array
+          items: { type: string }
+      required: [productId, handle, title, problems]
+    CatalogSync:
+      type: object
+      properties:
+        mode: { type: string, enum: [pull] }
+        persistenceStatus: { type: string, enum: [persisted, unavailable] }
+        lastSyncedAt: { type: ["string", "null"], format: date-time }
+      required: [mode, persistenceStatus, lastSyncedAt]
+    AdminSession:
+      type: object
+      properties:
+        authorized: { type: boolean, const: true }
+        role: { type: string, enum: [owner, admin, staff] }
+        canManageStaff: { type: boolean }
+      required: [authorized, role, canManageStaff]
+    AdminStaffMember:
+      type: object
+      properties:
+        userId: { type: string }
+        email: { type: string, format: email }
+        displayName: { type: ["string", "null"] }
+        role:
+          type: ["string", "null"]
+          enum: [owner, admin, staff, null]
+      required: [userId, email, displayName, role]
+    AdminStaffAccessUpdate:
+      type: object
+      properties:
+        role:
+          type: ["string", "null"]
+          enum: [admin, staff, null]
+      required: [role]
+      additionalProperties: false
+    AdminCatalogHealth:
+      type: object
+      properties:
+        checkedAt: { type: string, format: date-time }
+        totalProducts: { type: integer, minimum: 0 }
+        availableProducts: { type: integer, minimum: 0 }
+        issues:
+          type: array
+          items: { $ref: "#/components/schemas/CatalogIssue" }
+        sync: { $ref: "#/components/schemas/CatalogSync" }
+      required: [checkedAt, totalProducts, availableProducts, issues, sync]
+    PolicyDocument:
+      type: object
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        contentMarkdown: { type: string }
+        status: { type: string, enum: [draft, review, published] }
+        updatedAt: { type: string, format: date-time }
+      required: [slug, title, contentMarkdown, status, updatedAt]
+    PolicyDocumentInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        contentMarkdown: { type: string, maxLength: 50000 }
+        status: { type: string, enum: [draft, review, published] }
+      required: [title, contentMarkdown, status]
+      additionalProperties: false
+    AnalyticsEventCount:
+      type: object
+      properties:
+        eventName: { type: string }
+        count: { type: integer, minimum: 0 }
+      required: [eventName, count]
+    AdminAnalytics:
+      type: object
+      properties:
+        recordedEvents: { type: integer, minimum: 0 }
+        firstRecordedAt: { type: ["string", "null"], format: date-time }
+        lastRecordedAt: { type: ["string", "null"], format: date-time }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/AnalyticsEventCount" }
+        unavailableMetrics:
+          type: array
+          items: { type: string }
+      required: [recordedEvents, firstRecordedAt, lastRecordedAt, events, unavailableMetrics]
+    CustomerProfile:
+      type: object
+      properties:
+        displayName: { type: ["string", "null"] }
+        preferredCurrency: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [displayName, preferredCurrency, createdAt, updatedAt]
+    CustomerProfileInput:
+      type: object
+      properties:
+        displayName: { type: ["string", "null"], maxLength: 100 }
+        preferredCurrency:
+          type: ["string", "null"]
+          pattern: "^[A-Z]{3}$"
+      additionalProperties: false
+    ProductReferenceInput:
+      type: object
+      properties:
+        shopifyProductId: { type: string, minLength: 1, maxLength: 255 }
+        productHandle: { type: string, minLength: 1, maxLength: 255 }
+      required: [shopifyProductId, productHandle]
+      additionalProperties: false
+    SavedProductReference:
+      type: object
+      properties:
+        shopifyProductId: { type: string }
+        productHandle: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [shopifyProductId, productHandle, createdAt]
+    ViewedProductReference:
+      type: object
+      properties:
+        shopifyProductId: { type: string }
+        productHandle: { type: string }
+        viewedAt: { type: string, format: date-time }
+      required: [shopifyProductId, productHandle, viewedAt]
+    OrderReference:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        processedAt: { type: string, format: date-time }
+        displayFinancialStatus: { type: ["string", "null"] }
+        displayFulfillmentStatus: { type: ["string", "null"] }
+        totalPrice: { $ref: "#/components/schemas/Money" }
+      required: [id, name, processedAt, displayFinancialStatus, displayFulfillmentStatus, totalPrice]
+    OrderLineItem:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        variantTitle: { type: ["string", "null"] }
+        quantity: { type: integer, minimum: 1 }
+        price: { $ref: "#/components/schemas/Money" }
+      required: [id, title, variantTitle, quantity, price]
+    OrderTracking:
+      type: object
+      properties:
+        company: { type: ["string", "null"] }
+        number: { type: ["string", "null"] }
+        url: { type: string, format: uri }
+      required: [company, number, url]
+    OrderFulfillment:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        tracking:
+          type: array
+          items: { $ref: "#/components/schemas/OrderTracking" }
+      required: [id, status, tracking]
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/OrderReference"
+        - type: object
+          properties:
+            lineItems:
+              type: array
+              items: { $ref: "#/components/schemas/OrderLineItem" }
+            fulfillments:
+              type: array
+              items: { $ref: "#/components/schemas/OrderFulfillment" }
+          required: [lineItems, fulfillments]
+    StorefrontStatus:
+      type: object
+      properties:
+        shopifyConnected: { type: boolean }
+        aiAvailable: { type: boolean }
+        catalogReady: { type: boolean }
+        message: { type: string }
+      required: [shopifyConnected, aiAvailable, catalogReady, message]
+    Money:
+      type: object
+      properties:
+        amount: { type: string }
+        currencyCode: { type: string }
+      required: [amount, currencyCode]
+    ProductImage:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+        altText: { type: ["string", "null"] }
+        width: { type: ["integer", "null"] }
+        height: { type: ["integer", "null"] }
+      required: [url, altText, width, height]
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        title: { type: string }
+        description: { type: string }
+        image:
+          oneOf:
+            - $ref: "#/components/schemas/ProductImage"
+            - type: "null"
+        price:
+          $ref: "#/components/schemas/Money"
+        compareAtPrice:
+          oneOf:
+            - $ref: "#/components/schemas/Money"
+            - type: "null"
+        availableForSale: { type: boolean }
+        sizes:
+          type: array
+          items: { type: string }
+        badges:
+          type: array
+          items: { type: string }
+      required: [id, handle, title, description, image, price, compareAtPrice, availableForSale, sizes, badges]
+    SelectedOption:
+      type: object
+      properties:
+        name: { type: string }
+        value: { type: string }
+      required: [name, value]
+    ProductOption:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        values:
+          type: array
+          items: { type: string }
+      required: [id, name, values]
+    ProductVariant:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        availableForSale: { type: boolean }
+        quantityAvailable: { type: ["integer", "null"] }
+        price:
+          $ref: "#/components/schemas/Money"
+        compareAtPrice:
+          oneOf:
+            - $ref: "#/components/schemas/Money"
+            - type: "null"
+        image:
+          oneOf:
+            - $ref: "#/components/schemas/ProductImage"
+            - type: "null"
+        selectedOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SelectedOption"
+      required: [id, title, availableForSale, quantityAvailable, price, compareAtPrice, image, selectedOptions]
+    ProductDetail:
+      type: object
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        title: { type: string }
+        description: { type: string }
+        descriptionHtml: { type: string }
+        vendor: { type: string }
+        productType: { type: string }
+        availableForSale: { type: boolean }
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductOption"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductVariant"
+      required: [id, handle, title, description, descriptionHtml, vendor, productType, availableForSale, images, options, variants]
+    CartLineProduct:
+      type: object
+      properties:
+        handle: { type: string }
+        title: { type: string }
+      required: [handle, title]
+    CartLineMerchandise:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        price:
+          $ref: "#/components/schemas/Money"
+        compareAtPrice:
+          oneOf:
+            - $ref: "#/components/schemas/Money"
+            - type: "null"
+        image:
+          oneOf:
+            - $ref: "#/components/schemas/ProductImage"
+            - type: "null"
+        selectedOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SelectedOption"
+        product:
+          $ref: "#/components/schemas/CartLineProduct"
+      required: [id, title, price, compareAtPrice, image, selectedOptions, product]
+    CartLine:
+      type: object
+      properties:
+        id: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        merchandise:
+          $ref: "#/components/schemas/CartLineMerchandise"
+      required: [id, quantity, merchandise]
+    CartCost:
+      type: object
+      properties:
+        subtotalAmount:
+          $ref: "#/components/schemas/Money"
+        totalAmount:
+          $ref: "#/components/schemas/Money"
+      required: [subtotalAmount, totalAmount]
+    Cart:
+      type: object
+      properties:
+        id: { type: string }
+        checkoutUrl: { type: string, format: uri }
+        totalQuantity: { type: integer, minimum: 0 }
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartLine"
+        cost:
+          $ref: "#/components/schemas/CartCost"
+      required: [id, checkoutUrl, totalQuantity, lines, cost]
+    CartCreateInput:
+      type: object
+      properties:
+        merchandiseId: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1, maximum: 20, default: 1 }
+      required: [merchandiseId]
+    CartLineAddInput:
+      type: object
+      properties:
+        cartId: { type: string, minLength: 1 }
+        merchandiseId: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1, maximum: 20, default: 1 }
+      required: [cartId, merchandiseId]
+    CartLineUpdateInput:
+      type: object
+      properties:
+        cartId: { type: string, minLength: 1 }
+        lineId: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1, maximum: 20 }
+      required: [cartId, lineId, quantity]
+    CartLineRemoveInput:
+      type: object
+      properties:
+        cartId: { type: string, minLength: 1 }
+        lineId: { type: string, minLength: 1 }
+      required: [cartId, lineId]
+    MerchandisingGroup:
+      type: object
+      properties:
+        title: { type: string }
+        handle: { type: string }
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required: [title, handle, products]
+    StorefrontHome:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/MerchandisingGroup"
+      required: [groups]
+    ProductSearchResult:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total: { type: integer, minimum: 0 }
+      required: [products, total]
+    AssistantQueryInput:
+      type: object
+      properties:
+        message: { type: string, minLength: 1, maxLength: 1000 }
+        conversationId: { type: ["string", "null"] }
+      required: [message]
+    AssistantResponse:
+      type: object
+      properties:
+        conversationId: { type: string }
+        message: { type: string }
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required: [conversationId, message, products]

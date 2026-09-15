@@ -1,0 +1,17 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "74mlIl4zGCHlKIenfoZb8"
+uri = "file://.local/conversation-workspace/files/M_AND_E_GARMENTS_ARCHITECTURE_PLAN.md"
+type = "text"
+title = "M&E Garments Architecture Plan"
+description = "Complete pre-coding architecture, database schema, Shopify and AI integration design, folder structure, security model, credential checkpoints, and phased implementation plan."
+logical_id = "d3be60e1-5583-4425-9cc4-d7f82afab2b7"
+content_hash = "sha256:da04cd49e9906ae8c74daaf10e6c264a494e80e3ba7c1086be2df343e977e0c8"
+size = 36015
+mtime_ms = 1788957769983
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/conversation:68bbe197-e23b-4561-a7ac-35df64883264/d3be60e1-5583-4425-9cc4-d7f82afab2b7/816face3-bb61-46db-9ed6-84d537adbe40"
+storage_version_token = "1788957777489495"
+content_type = "text/markdown"
+source_uri = "file://M_AND_E_GARMENTS_ARCHITECTURE_PLAN.md"

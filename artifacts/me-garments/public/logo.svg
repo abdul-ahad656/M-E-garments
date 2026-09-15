@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/Dom/2000/svg" viewBox="0 0 200 60">
+  <style>
+    .brand { font-family: 'Fraunces', serif; font-weight: 900; font-size: 42px; fill: hsl(350 96% 43%); }
+  </style>
+  <text x="100" y="42" text-anchor="middle" class="brand">M&amp;E</text>
+</svg>
