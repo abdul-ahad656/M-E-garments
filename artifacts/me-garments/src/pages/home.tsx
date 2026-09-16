@@ -6,8 +6,10 @@ import { Link } from "wouter";
 import { ArrowRight, Sparkles, ShieldCheck, HeartHandshake, Store, WandSparkles } from "lucide-react";
 import { BoyCharacter } from "@/components/illustrations/boy";
 import { GirlCharacter } from "@/components/illustrations/girl";
+import { useAssistantWidget } from "@/components/assistant-widget";
 
 export default function Home() {
+  const { open: openAssistant } = useAssistantWidget();
   const { data: status, isLoading: statusLoading } = useGetStorefrontStatus();
   const { data: homeData, isLoading: homeLoading, error } = useGetStorefrontHome({
     query: {
@@ -191,8 +193,14 @@ export default function Home() {
             <p className="mt-5 max-w-2xl text-white/80">
               Ask naturally by age, occasion, color, category, and budget. Recommendations only use products found in the connected Shopify catalog.
             </p>
-            <Button asChild variant="secondary" size="lg" className="mt-8 rounded-full px-8">
-              <Link href="/assistant">Open AI Assistant</Link>
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="mt-8 rounded-full px-8"
+              onClick={openAssistant}
+            >
+              Open AI Assistant
             </Button>
           </div>
           <div className="rounded-3xl border border-white/20 bg-white/10 p-8 backdrop-blur-sm">

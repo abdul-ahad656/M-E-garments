@@ -1,6 +1,9 @@
 import { Link } from "wouter";
+import { useAssistantWidget } from "@/components/assistant-widget";
 
 export function Footer() {
+  const { open: openAssistant } = useAssistantWidget();
+
   return (
     <footer className="bg-secondary mt-auto border-t">
       <div className="container mx-auto px-4 py-12 md:py-16">
@@ -29,9 +32,15 @@ export function Footer() {
               <li><Link href="/age/toddler" className="hover:text-primary transition-colors">Toddler (1-3y)</Link></li>
               <li><Link href="/age/kids" className="hover:text-primary transition-colors">Kids (4-8y)</Link></li>
               <li><Link href="/occasion/party" className="hover:text-primary transition-colors">Partywear</Link></li>
-              <li><Link href="/assistant" className="hover:text-primary transition-colors flex items-center gap-1">
-                Shopping Assistant <span className="text-primary text-[10px]">AI</span>
-              </Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openAssistant}
+                  className="hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  Shopping Assistant <span className="text-primary text-[10px]">AI</span>
+                </button>
+              </li>
             </ul>
           </div>
 

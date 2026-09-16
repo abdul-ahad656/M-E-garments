@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useUser } from "@clerk/react";
-import { Search, ShoppingBag, User, Menu, Sparkles, ShieldCheck } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, ShieldCheck } from "lucide-react";
 import {
   getGetAdminSessionQueryKey,
   useGetAdminSession,
@@ -65,13 +65,6 @@ export function Navbar() {
               Admin
             </Link>
           )}
-          <Link
-            href="/assistant"
-            className="hidden sm:flex inline-flex items-center justify-center whitespace-nowrap text-sm h-9 px-3 text-primary hover:text-primary hover:bg-accent rounded-full font-medium transition-colors"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Assistant
-          </Link>
           <Link href="/search" className="text-foreground hover:text-primary transition-colors p-2">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
