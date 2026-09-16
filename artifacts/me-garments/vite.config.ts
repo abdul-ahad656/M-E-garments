@@ -11,10 +11,14 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
-const apiProxyTarget = process.env.API_PROXY_TARGET ?? "http://127.0.0.1:8080";
+// Prefer 3001 locally — Apache/XAMPP often already binds 8080 on Windows.
+const apiProxyTarget = process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3001";
+const repoRoot = path.resolve(import.meta.dirname, "..", "..");
 
 export default defineConfig({
   base: basePath,
+  // Load VITE_* from the monorepo root `.env` (same file as the API).
+  envDir: repoRoot,
   plugins: [react(), tailwindcss({ optimize: false })],
   resolve: {
     alias: {

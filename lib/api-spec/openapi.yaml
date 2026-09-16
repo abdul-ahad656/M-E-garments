@@ -599,6 +599,378 @@ paths:
               schema: { $ref: "#/components/schemas/AdminAnalytics" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/products:
+    get:
+      operationId: listAdminProducts
+      tags: [admin]
+      summary: List Shopify products for staff commerce ops
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema: { type: string, maxLength: 512 }
+        - name: query
+          in: query
+          required: false
+          schema: { type: string, maxLength: 200 }
+      responses:
+        "200":
+          description: Paginated product list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProductList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+    post:
+      operationId: createAdminProduct
+      tags: [admin]
+      summary: Create a Shopify product with variants and image URLs
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProductCreateInput" }
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProductDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Shopify rejected the product input
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/products/{id}:
+    get:
+      operationId: getAdminProduct
+      tags: [admin]
+      summary: Get a Shopify product for editing
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      responses:
+        "200":
+          description: Product detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProductDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+    patch:
+      operationId: updateAdminProduct
+      tags: [admin]
+      summary: Update a Shopify product, variant prices, and image URLs
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProductUpdateInput" }
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProductDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "422":
+          description: Shopify rejected the product input
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/inventory:
+    get:
+      operationId: listAdminInventory
+      tags: [admin]
+      summary: List variant inventory levels at the primary location
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema: { type: string, maxLength: 512 }
+        - name: query
+          in: query
+          required: false
+          schema: { type: string, maxLength: 200 }
+      responses:
+        "200":
+          description: Inventory rows
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInventoryList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/inventory/adjust:
+    post:
+      operationId: adjustAdminInventory
+      tags: [admin]
+      summary: Adjust available inventory for a variant inventory item
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminInventoryAdjustInput" }
+      responses:
+        "200":
+          description: Updated inventory row
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminInventoryItem" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Shopify rejected the inventory adjustment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/orders:
+    get:
+      operationId: listAdminOrders
+      tags: [admin]
+      summary: List Shopify orders for staff ops
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema: { type: string, maxLength: 512 }
+        - name: query
+          in: query
+          required: false
+          schema: { type: string, maxLength: 200 }
+        - name: financialStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [any, paid, pending, refunded, voided, partially_refunded, authorized]
+        - name: fulfillmentStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [any, shipped, unshipped, partial, unfulfilled]
+      responses:
+        "200":
+          description: Paginated staff order list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/orders/{id}:
+    get:
+      operationId: getAdminOrder
+      tags: [admin]
+      summary: Get a Shopify order for staff ops
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      responses:
+        "200":
+          description: Staff order detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/orders/{id}/fulfill:
+    post:
+      operationId: fulfillAdminOrder
+      tags: [admin]
+      summary: Create a fulfillment with optional tracking
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminOrderFulfillInput" }
+      responses:
+        "200":
+          description: Updated order after fulfillment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "422":
+          description: Shopify rejected the fulfillment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/orders/{id}/refund:
+    post:
+      operationId: refundAdminOrder
+      tags: [admin]
+      summary: Create a refund for an order
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminOrderRefundInput" }
+      responses:
+        "200":
+          description: Updated order after refund
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "422":
+          description: Shopify rejected the refund
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/orders/{id}/cancel:
+    post:
+      operationId: cancelAdminOrder
+      tags: [admin]
+      summary: Cancel a Shopify order
+      security: [{ ClerkSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminOrderCancelInput" }
+      responses:
+        "200":
+          description: Updated order after cancel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "422":
+          description: Shopify rejected the cancel
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "503":
+          description: Shopify Admin is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
 components:
   securitySchemes:
     ClerkSession:
@@ -722,6 +1094,265 @@ components:
           type: array
           items: { type: string }
       required: [recordedEvents, firstRecordedAt, lastRecordedAt, events, unavailableMetrics]
+    AdminProductSummary:
+      type: object
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [ACTIVE, ARCHIVED, DRAFT] }
+        productType: { type: string }
+        totalInventory: { type: integer }
+        featuredImageUrl: { type: ["string", "null"], format: uri }
+        updatedAt: { type: string, format: date-time }
+      required: [id, handle, title, status, productType, totalInventory, featuredImageUrl, updatedAt]
+    AdminProductList:
+      type: object
+      properties:
+        products:
+          type: array
+          items: { $ref: "#/components/schemas/AdminProductSummary" }
+        pageInfo:
+          $ref: "#/components/schemas/AdminPageInfo"
+      required: [products, pageInfo]
+    AdminProductVariantInput:
+      type: object
+      properties:
+        optionValues:
+          type: array
+          items: { type: string, minLength: 1, maxLength: 100 }
+          minItems: 1
+        price: { type: string, pattern: "^[0-9]+(\\.[0-9]{1,2})?$" }
+        sku: { type: ["string", "null"], maxLength: 100 }
+        compareAtPrice:
+          type: ["string", "null"]
+          pattern: "^[0-9]+(\\.[0-9]{1,2})?$"
+      required: [optionValues, price]
+      additionalProperties: false
+    AdminProductVariant:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        sku: { type: ["string", "null"] }
+        price: { type: string }
+        compareAtPrice: { type: ["string", "null"] }
+        inventoryItemId: { type: string }
+        inventoryQuantity: { type: integer }
+        selectedOptions:
+          type: array
+          items: { $ref: "#/components/schemas/SelectedOption" }
+      required: [id, title, sku, price, compareAtPrice, inventoryItemId, inventoryQuantity, selectedOptions]
+    AdminProductCreateInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 255 }
+        descriptionHtml: { type: string, maxLength: 100000 }
+        status: { type: string, enum: [ACTIVE, ARCHIVED, DRAFT] }
+        productType: { type: string, maxLength: 255 }
+        tags:
+          type: array
+          items: { type: string, maxLength: 100 }
+          maxItems: 50
+        optionName: { type: string, minLength: 1, maxLength: 100, default: Size }
+        variants:
+          type: array
+          items: { $ref: "#/components/schemas/AdminProductVariantInput" }
+          minItems: 1
+          maxItems: 100
+        imageUrls:
+          type: array
+          items: { type: string, format: uri }
+          maxItems: 20
+      required: [title, variants]
+      additionalProperties: false
+    AdminProductVariantUpdate:
+      type: object
+      properties:
+        id: { type: string, minLength: 1 }
+        price: { type: string, pattern: "^[0-9]+(\\.[0-9]{1,2})?$" }
+        compareAtPrice:
+          type: ["string", "null"]
+          pattern: "^[0-9]+(\\.[0-9]{1,2})?$"
+        sku: { type: ["string", "null"], maxLength: 100 }
+      required: [id, price]
+      additionalProperties: false
+    AdminProductUpdateInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 255 }
+        descriptionHtml: { type: string, maxLength: 100000 }
+        status: { type: string, enum: [ACTIVE, ARCHIVED, DRAFT] }
+        productType: { type: string, maxLength: 255 }
+        tags:
+          type: array
+          items: { type: string, maxLength: 100 }
+          maxItems: 50
+        variants:
+          type: array
+          items: { $ref: "#/components/schemas/AdminProductVariantUpdate" }
+          maxItems: 100
+        imageUrls:
+          type: array
+          items: { type: string, format: uri }
+          maxItems: 20
+      additionalProperties: false
+    AdminProductDetail:
+      type: object
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        title: { type: string }
+        descriptionHtml: { type: string }
+        status: { type: string, enum: [ACTIVE, ARCHIVED, DRAFT] }
+        productType: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/ProductOption" }
+        variants:
+          type: array
+          items: { $ref: "#/components/schemas/AdminProductVariant" }
+        images:
+          type: array
+          items: { $ref: "#/components/schemas/ProductImage" }
+        updatedAt: { type: string, format: date-time }
+      required: [id, handle, title, descriptionHtml, status, productType, tags, options, variants, images, updatedAt]
+    AdminPageInfo:
+      type: object
+      properties:
+        hasNextPage: { type: boolean }
+        endCursor: { type: ["string", "null"] }
+      required: [hasNextPage, endCursor]
+    AdminInventoryItem:
+      type: object
+      properties:
+        inventoryItemId: { type: string }
+        variantId: { type: string }
+        productId: { type: string }
+        productTitle: { type: string }
+        variantTitle: { type: string }
+        sku: { type: ["string", "null"] }
+        locationId: { type: string }
+        locationName: { type: string }
+        available: { type: integer }
+      required: [inventoryItemId, variantId, productId, productTitle, variantTitle, sku, locationId, locationName, available]
+    AdminInventoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminInventoryItem" }
+        pageInfo:
+          $ref: "#/components/schemas/AdminPageInfo"
+        locationId: { type: string }
+        locationName: { type: string }
+      required: [items, pageInfo, locationId, locationName]
+    AdminInventoryAdjustInput:
+      type: object
+      properties:
+        inventoryItemId: { type: string, minLength: 1 }
+        delta: { type: integer, minimum: -100000, maximum: 100000 }
+      required: [inventoryItemId, delta]
+      additionalProperties: false
+    AdminOrderSummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        processedAt: { type: string, format: date-time }
+        displayFinancialStatus: { type: ["string", "null"] }
+        displayFulfillmentStatus: { type: ["string", "null"] }
+        totalPrice: { $ref: "#/components/schemas/Money" }
+        customerEmail: { type: ["string", "null"] }
+        customerName: { type: ["string", "null"] }
+      required: [id, name, processedAt, displayFinancialStatus, displayFulfillmentStatus, totalPrice, customerEmail, customerName]
+    AdminOrderList:
+      type: object
+      properties:
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrderSummary" }
+        pageInfo:
+          $ref: "#/components/schemas/AdminPageInfo"
+      required: [orders, pageInfo]
+    AdminOrderLineItem:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        variantTitle: { type: ["string", "null"] }
+        quantity: { type: integer, minimum: 0 }
+        fulfillableQuantity: { type: integer, minimum: 0 }
+        price: { $ref: "#/components/schemas/Money" }
+        variantId: { type: ["string", "null"] }
+      required: [id, title, variantTitle, quantity, fulfillableQuantity, price, variantId]
+    AdminOrderDetail:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        processedAt: { type: string, format: date-time }
+        displayFinancialStatus: { type: ["string", "null"] }
+        displayFulfillmentStatus: { type: ["string", "null"] }
+        cancelledAt: { type: ["string", "null"], format: date-time }
+        totalPrice: { $ref: "#/components/schemas/Money" }
+        customerEmail: { type: ["string", "null"] }
+        customerName: { type: ["string", "null"] }
+        lineItems:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrderLineItem" }
+        fulfillments:
+          type: array
+          items: { $ref: "#/components/schemas/OrderFulfillment" }
+        fulfillmentOrders:
+          type: array
+          items: { $ref: "#/components/schemas/AdminFulfillmentOrder" }
+      required: [id, name, processedAt, displayFinancialStatus, displayFulfillmentStatus, cancelledAt, totalPrice, customerEmail, customerName, lineItems, fulfillments, fulfillmentOrders]
+    AdminFulfillmentOrder:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        lineItems:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              remainingQuantity: { type: integer, minimum: 0 }
+            required: [id, remainingQuantity]
+      required: [id, status, lineItems]
+    AdminOrderFulfillInput:
+      type: object
+      properties:
+        notifyCustomer: { type: boolean, default: true }
+        trackingCompany: { type: ["string", "null"], maxLength: 100 }
+        trackingNumber: { type: ["string", "null"], maxLength: 100 }
+      additionalProperties: false
+    AdminOrderRefundInput:
+      type: object
+      properties:
+        amount:
+          type: ["string", "null"]
+          pattern: "^[0-9]+(\\.[0-9]{1,2})?$"
+        full: { type: boolean, default: false }
+        note: { type: ["string", "null"], maxLength: 500 }
+        notify: { type: boolean, default: true }
+      additionalProperties: false
+    AdminOrderCancelInput:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum: [CUSTOMER, DECLINED, FRAUD, INVENTORY, OTHER, STAFF]
+          default: OTHER
+        restock: { type: boolean, default: true }
+        notifyCustomer: { type: boolean, default: true }
+        staffNote: { type: ["string", "null"], maxLength: 500 }
+      additionalProperties: false
     CustomerProfile:
       type: object
       properties:

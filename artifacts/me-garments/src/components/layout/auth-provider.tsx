@@ -6,9 +6,21 @@ import { useLocation, useSearch } from 'wouter';
 import { useQueryClient } from "@tanstack/react-query";
 import { trackEvent } from "@/lib/analytics";
 
+const clerkEnvKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
+  | string
+  | undefined;
+
+// Without an env key, publishableKeyFromHost("localhost") invents clerk.localhost
+// and Clerk JS fails with ERR_CONNECTION_REFUSED.
+if (!clerkEnvKey) {
+  throw new Error(
+    "Missing VITE_CLERK_PUBLISHABLE_KEY in the repo root .env file",
+  );
+}
+
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+  clerkEnvKey,
 );
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
@@ -18,10 +30,6 @@ function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
     ? path.slice(basePath.length) || "/"
     : path;
-}
-
-if (!clerkPubKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env file');
 }
 
 const clerkAppearance = {

@@ -13,7 +13,9 @@ let cachedConfig:
 
 export class ShopifyInputError extends Error {}
 export class ShopifyAdminUnavailableError extends Error {}
+export class ShopifyAdminUserError extends Error {}
 export class ShopifyOrderNotFoundError extends Error {}
+export class ShopifyAdminNotFoundError extends Error {}
 
 export type StorefrontProduct = {
   id: string;
@@ -184,6 +186,57 @@ async function shopifyAdminFetch(
     headers,
     signal: init.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
+}
+
+export async function shopifyAdminGraphql<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
+  if (!isShopifyAdminConfigured()) {
+    throw new ShopifyAdminUnavailableError(
+      "Missing SHOPIFY_SHOP_DOMAIN or SHOPIFY_ADMIN_ACCESS_TOKEN",
+    );
+  }
+
+  const response = await shopifyAdminFetch(`/admin/api/${API_VERSION}/graphql.json`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    throw new ShopifyAdminUnavailableError(
+      `Shopify Admin GraphQL request failed with ${response.status}`,
+    );
+  }
+
+  const payload = (await response.json()) as {
+    data?: T;
+    errors?: Array<{ message: string }>;
+  };
+
+  if (payload.errors?.length) {
+    throw new ShopifyAdminUnavailableError(
+      payload.errors.map((error) => error.message).join("; "),
+    );
+  }
+
+  if (!payload.data) {
+    throw new ShopifyAdminUnavailableError(
+      "Shopify Admin GraphQL returned no data",
+    );
+  }
+
+  return payload.data;
+}
+
+export function assertAdminUserErrors(
+  userErrors: Array<{ message: string; field?: string[] | null }> | null | undefined,
+): void {
+  if (!userErrors?.length) return;
+  throw new ShopifyAdminUserError(
+    userErrors.map((error) => error.message).join("; "),
+  );
 }
 
 export type ShopifyOrderReference = {

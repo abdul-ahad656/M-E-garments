@@ -1,9 +1,30 @@
 import { Link, useLocation } from "wouter";
-import { Search, ShoppingBag, User, Menu, Sparkles } from "lucide-react";
+import { useUser } from "@clerk/react";
+import { Search, ShoppingBag, User, Menu, Sparkles, ShieldCheck } from "lucide-react";
+import {
+  getGetAdminSessionQueryKey,
+  useGetAdminSession,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
+import { canRenderAdminWorkspace } from "@/lib/admin-access";
 
 export function Navbar() {
   const [location] = useLocation();
+  const { isSignedIn, user } = useUser();
+  const adminSession = useGetAdminSession({
+    query: {
+      queryKey: [...getGetAdminSessionQueryKey(), user?.id ?? "signed-out"],
+      enabled: Boolean(isSignedIn && user?.id),
+      staleTime: 60_000,
+      retry: false,
+    },
+  });
+  const showAdmin = canRenderAdminWorkspace({
+    isSignedIn: Boolean(isSignedIn),
+    isSuccess: adminSession.isSuccess,
+    isError: adminSession.isError,
+    authorized: adminSession.data?.authorized,
+  });
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -35,6 +56,15 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center justify-end flex-1 space-x-2 md:space-x-4">
+          {showAdmin && (
+            <Link
+              href="/admin"
+              className="hidden sm:flex inline-flex items-center justify-center whitespace-nowrap text-sm h-9 px-3 text-foreground hover:text-primary hover:bg-accent rounded-full font-medium transition-colors"
+            >
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Admin
+            </Link>
+          )}
           <Link
             href="/assistant"
             className="hidden sm:flex inline-flex items-center justify-center whitespace-nowrap text-sm h-9 px-3 text-primary hover:text-primary hover:bg-accent rounded-full font-medium transition-colors"

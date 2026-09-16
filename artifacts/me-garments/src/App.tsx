@@ -18,7 +18,15 @@ import Assistant from '@/pages/assistant';
 import Product from '@/pages/product';
 import Cart from '@/pages/cart';
 import Account from '@/pages/account';
-import Admin from '@/pages/admin';
+import AdminOverviewPage from '@/pages/admin/overview';
+import AdminProductsPage from '@/pages/admin/products';
+import AdminProductEditorPage from '@/pages/admin/product-editor';
+import AdminInventoryPage from '@/pages/admin/inventory';
+import AdminOrdersPage from '@/pages/admin/orders';
+import AdminOrderDetailPage from '@/pages/admin/order-detail';
+import AdminContentPage from '@/pages/admin/content';
+import AdminAnalyticsPage from '@/pages/admin/analytics';
+import AdminStaffPage from '@/pages/admin/staff';
 import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient({
@@ -64,7 +72,17 @@ function Router() {
 
           <Route path="/cart" component={Cart} />
           <Route path="/account" component={Account} />
-          <Route path="/admin" component={Admin} />
+
+          <Route path="/admin/products/new" component={AdminProductEditorPage} />
+          <Route path="/admin/products/:id" component={AdminProductEditorPage} />
+          <Route path="/admin/products" component={AdminProductsPage} />
+          <Route path="/admin/inventory" component={AdminInventoryPage} />
+          <Route path="/admin/orders/:id" component={AdminOrderDetailPage} />
+          <Route path="/admin/orders" component={AdminOrdersPage} />
+          <Route path="/admin/content" component={AdminContentPage} />
+          <Route path="/admin/analytics" component={AdminAnalyticsPage} />
+          <Route path="/admin/staff" component={AdminStaffPage} />
+          <Route path="/admin" component={AdminOverviewPage} />
 
           <Route component={NotFound} />
         </Switch>
