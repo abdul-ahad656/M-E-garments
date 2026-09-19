@@ -10,5 +10,5 @@ export type DeleteWishlistItemParams = {
 /**
  * @minLength 1
  */
-shopifyProductId: string;
+productId: string;
 };

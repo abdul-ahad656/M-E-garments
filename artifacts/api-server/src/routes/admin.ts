@@ -13,7 +13,7 @@ import {
   UpdateAdminStaffAccessParams,
   UpdateAdminStaffAccessResponse,
 } from "@workspace/api-zod";
-import { getShopifyCatalogHealth } from "../lib/shopify";
+import { getCatalogHealth } from "../lib/commerce-repository";
 import {
   getAnalyticsSummary,
   listPolicies,
@@ -173,7 +173,7 @@ router.patch("/admin/staff/:userId", requireOwner, async (req, res): Promise<voi
 
 router.get("/admin/catalog-health", async (req, res): Promise<void> => {
   try {
-    const health = await getShopifyCatalogHealth();
+    const health = await getCatalogHealth();
     let lastSyncedAt: string | null = null;
     let persistenceStatus: "persisted" | "unavailable" = "persisted";
     try {
@@ -198,8 +198,8 @@ router.get("/admin/catalog-health", async (req, res): Promise<void> => {
   } catch (error) {
     req.log.error({ err: error }, "Admin catalog health pull failed");
     res.status(503).json({
-      error: "Live Shopify catalog health is unavailable",
-      code: "SHOPIFY_UNAVAILABLE",
+      error: "Live catalog health is unavailable",
+      code: "COMMERCE_UNAVAILABLE",
     });
   }
 });

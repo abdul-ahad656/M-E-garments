@@ -21,4 +21,6 @@ export interface AdminProductVariantUpdate {
      * @nullable
      */
   sku?: string | null;
+  /** @minimum 0 */
+  inventoryQuantity?: number;
 }

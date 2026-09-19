@@ -40,7 +40,7 @@ export function FavoriteButton({
   const saveItem = useSaveWishlistItem();
   const deleteItem = useDeleteWishlistItem();
 
-  const isSaved = wishlist?.some(item => item.shopifyProductId === productId);
+  const isSaved = wishlist?.some(item => item.productId === productId);
   const [isHovered, setIsHovered] = useState(false);
 
   const isPending = saveItem.isPending || deleteItem.isPending || (isSignedIn && isWishlistLoading);
@@ -68,11 +68,11 @@ export function FavoriteButton({
     if (isPending) return;
 
     if (isSaved) {
-      deleteItem.mutate({ params: { shopifyProductId: productId } }, {
+      deleteItem.mutate({ params: { productId: productId } }, {
         onSuccess: () => {
           queryClient.setQueryData(getListWishlistItemsQueryKey(), (old: any) => {
             if (!old) return old;
-            return old.filter((item: any) => item.shopifyProductId !== productId);
+            return old.filter((item: any) => item.productId !== productId);
           });
           trackEvent("favorite_removed", { location });
         },
@@ -81,7 +81,7 @@ export function FavoriteButton({
         }
       });
     } else {
-      saveItem.mutate({ data: { shopifyProductId: productId, productHandle } }, {
+      saveItem.mutate({ data: { productId: productId, productHandle } }, {
         onSuccess: (newItem) => {
           queryClient.setQueryData(getListWishlistItemsQueryKey(), (old: any) => {
             if (!old) return [newItem];

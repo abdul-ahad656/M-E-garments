@@ -1,2 +1,2 @@
-- [Commerce integration boundaries](commerce-integration-boundaries.md) — Shopify owns commerce; use connector-backed Storefront/Admin access, verified identity, and pull-based refresh.
-- [Shopify cart IDs in URLs](shopify-cart-id-urls.md) — send opaque Shopify cart IDs as encoded query values, not generated path segments.
+- [Commerce integration boundaries](commerce-integration-boundaries.md) — Supabase owns commerce; R2 is image blob storage; Clerk owns identity; unpaid checkout until Stripe.
+- [Cart IDs in URLs](cart-id-urls.md) — send opaque cart IDs as encoded query values, not generated path segments.

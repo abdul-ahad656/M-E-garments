@@ -14,7 +14,10 @@ const repository = vi.hoisted(() => ({
   listRecentlyViewed: vi.fn(),
   saveRecentlyViewed: vi.fn(),
 }));
-const orders = vi.hoisted(() => ({ list: vi.fn(), get: vi.fn() }));
+const orders = vi.hoisted(() => ({
+  listCustomerOrders: vi.fn(),
+  getCustomerOrder: vi.fn(),
+}));
 
 vi.mock("@clerk/express", () => ({
   clerkMiddleware:
@@ -25,15 +28,15 @@ vi.mock("@clerk/express", () => ({
   clerkClient: { users: { getUser: auth.getUser } },
 }));
 vi.mock("../lib/customer-repository", () => repository);
-vi.mock("../lib/shopify", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../lib/shopify")>();
-  return {
-    ...original,
-    getShopifyOrderDetail: orders.get,
-    getShopifyOrderReferences: orders.list,
-    listShopifyOrdersByEmail: orders.list,
-  };
-});
+vi.mock("../lib/order-repository", () => orders);
+vi.mock("../lib/commerce-repository", () => ({
+  CommerceNotFoundError: class CommerceNotFoundError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "CommerceNotFoundError";
+    }
+  },
+}));
 
 import {
   getCustomerOrder,
@@ -90,52 +93,51 @@ describe("authenticated account API", () => {
 
   it("scopes persistence to the server-derived Clerk user", async () => {
     repository.saveWishlist.mockResolvedValue({
-      shopifyProductId: "gid://shopify/Product/1",
+      productId: "11111111-1111-1111-1111-111111111111",
       productHandle: "dress",
       createdAt: "2026-01-01T00:00:00.000Z",
     });
     await saveWishlistItem({
-      shopifyProductId: "gid://shopify/Product/1",
+      productId: "11111111-1111-1111-1111-111111111111",
       productHandle: "dress",
     });
     expect(repository.saveWishlist).toHaveBeenCalledWith("user_server_123", {
-      shopifyProductId: "gid://shopify/Product/1",
+      productId: "11111111-1111-1111-1111-111111111111",
       productHandle: "dress",
     });
   });
 
-  it("deletes slash-containing Shopify GIDs via the query contract", async () => {
+  it("deletes wishlist items by productId via the query contract", async () => {
     await deleteWishlistItem({
-      shopifyProductId: "gid://shopify/Product/1",
+      productId: "11111111-1111-1111-1111-111111111111",
     });
     expect(repository.deleteWishlist).toHaveBeenCalledWith(
       "user_server_123",
-      "gid://shopify/Product/1",
+      "11111111-1111-1111-1111-111111111111",
     );
   });
 
-  it("looks up live orders only by the Clerk primary email", async () => {
-    orders.list.mockResolvedValue([]);
+  it("lists orders for the authenticated Clerk user", async () => {
+    orders.listCustomerOrders.mockResolvedValue([]);
     await listCustomerOrders();
-    expect(auth.getUser).toHaveBeenCalledWith("user_server_123");
-    expect(orders.list).toHaveBeenCalledWith("customer@example.com");
+    expect(orders.listCustomerOrders).toHaveBeenCalledWith("user_server_123");
   });
 
-  it("looks up one live order by verified Clerk email and the requested id", async () => {
-    orders.get.mockResolvedValue({
+  it("loads one order owned by the authenticated Clerk user", async () => {
+    orders.getCustomerOrder.mockResolvedValue({
       id: "99",
       name: "#1001",
       processedAt: "2026-01-01T00:00:00Z",
       displayFinancialStatus: "paid",
       displayFulfillmentStatus: "fulfilled",
-      totalPrice: { amount: "24.00", currencyCode: "USD" },
+      totalPrice: { amount: "24.00", currencyCode: "PKR" },
       lineItems: [
         {
           id: "501",
           title: "Rose Dress",
           variantTitle: "8 / Pink",
           quantity: 1,
-          price: { amount: "24.00", currencyCode: "USD" },
+          price: { amount: "24.00", currencyCode: "PKR" },
         },
       ],
       fulfillments: [
@@ -158,55 +160,14 @@ describe("authenticated account API", () => {
       lineItems: [{ title: "Rose Dress" }],
       fulfillments: [{ tracking: [{ number: "1Z999" }] }],
     });
-    expect(orders.get).toHaveBeenCalledWith("customer@example.com", "99");
+    expect(orders.getCustomerOrder).toHaveBeenCalledWith("user_server_123", "99");
   });
 
   it("returns an explicit unavailable response without fake orders", async () => {
-    const { ShopifyAdminUnavailableError } = await import("../lib/shopify");
-    orders.list.mockRejectedValue(
-      new ShopifyAdminUnavailableError(
-        "The Shopify connector does not provide Admin API query capability",
-      ),
-    );
+    orders.listCustomerOrders.mockRejectedValue(new Error("database unavailable"));
     await expect(listCustomerOrders()).rejects.toMatchObject({
       status: 503,
-      data: { code: "SHOPIFY_ADMIN_UNAVAILABLE" },
+      data: { code: "COMMERCE_UNAVAILABLE" },
     });
-  });
-
-  it("requires a verified Clerk primary email before lookup", async () => {
-    auth.getUser.mockResolvedValueOnce({
-      primaryEmailAddressId: "email_primary",
-      emailAddresses: [
-        {
-          id: "email_primary",
-          emailAddress: "customer@example.com",
-          verification: { status: "unverified" },
-        },
-      ],
-    });
-    await expect(listCustomerOrders()).rejects.toMatchObject({
-      status: 422,
-      data: { code: "PRIMARY_EMAIL_VERIFICATION_REQUIRED" },
-    });
-    expect(orders.list).not.toHaveBeenCalled();
-  });
-
-  it("requires a verified Clerk primary email before an order detail lookup", async () => {
-    auth.getUser.mockResolvedValueOnce({
-      primaryEmailAddressId: "email_primary",
-      emailAddresses: [
-        {
-          id: "email_primary",
-          emailAddress: "customer@example.com",
-          verification: { status: "unverified" },
-        },
-      ],
-    });
-    await expect(getCustomerOrder("99")).rejects.toMatchObject({
-      status: 422,
-      data: { code: "PRIMARY_EMAIL_VERIFICATION_REQUIRED" },
-    });
-    expect(orders.get).not.toHaveBeenCalled();
   });
 });

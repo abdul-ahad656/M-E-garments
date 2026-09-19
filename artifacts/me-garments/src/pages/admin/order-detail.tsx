@@ -7,6 +7,7 @@ import {
   useCancelAdminOrder,
   useFulfillAdminOrder,
   useGetAdminOrder,
+  useMarkAdminOrderPaid,
   useRefundAdminOrder,
   type AdminOrderCancelInputReason,
 } from "@workspace/api-client-react";
@@ -36,7 +37,7 @@ function apiErrorMessage(error: unknown): string {
       return String((error as { message: unknown }).message);
     }
   }
-  return "Shopify rejected the request";
+  return "Request rejected";
 }
 
 export default function AdminOrderDetailPage() {
@@ -55,6 +56,7 @@ export default function AdminOrderDetailPage() {
   const fulfill = useFulfillAdminOrder();
   const refund = useRefundAdminOrder();
   const cancel = useCancelAdminOrder();
+  const markPaid = useMarkAdminOrderPaid();
 
   const [trackingCompany, setTrackingCompany] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -77,7 +79,7 @@ export default function AdminOrderDetailPage() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Order unavailable</AlertTitle>
-            <AlertDescription>Shopify Admin could not load this order.</AlertDescription>
+            <AlertDescription>This order could not be loaded.</AlertDescription>
           </Alert>
         )}
 
@@ -159,7 +161,42 @@ export default function AdminOrderDetailPage() {
             )}
 
             {!order.data.cancelledAt && (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+                {order.data.displayFinancialStatus?.toLowerCase() === "unpaid" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Mark paid</CardTitle>
+                      <CardDescription>
+                        Record manual payment until Stripe is connected
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        disabled={markPaid.isPending}
+                        onClick={() =>
+                          markPaid.mutate(
+                            { id: orderPathId },
+                            {
+                              onSuccess: async () => {
+                                await refresh();
+                                toast({ title: "Order marked paid" });
+                              },
+                              onError: (error) =>
+                                toast({
+                                  title: "Mark paid failed",
+                                  description: apiErrorMessage(error),
+                                  variant: "destructive",
+                                }),
+                            },
+                          )
+                        }
+                      >
+                        {markPaid.isPending ? "Updating…" : "Mark as paid"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Fulfill</CardTitle>

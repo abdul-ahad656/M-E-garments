@@ -11,7 +11,7 @@ export interface ProductReferenceInput {
      * @minLength 1
      * @maxLength 255
      */
-  shopifyProductId: string;
+  productId: string;
   /**
      * @minLength 1
      * @maxLength 255

@@ -36,7 +36,7 @@ export default function Product() {
     if (isSignedIn && productId && productHandle && viewedRecorded.current !== productId && !inFlight.current) {
       inFlight.current = true;
       saveRecentlyViewedRef.current(
-        { data: { shopifyProductId: productId, productHandle } },
+        { data: { productId: productId, productHandle } },
         {
           onSuccess: () => {
             viewedRecorded.current = productId;
@@ -133,7 +133,7 @@ export default function Product() {
 
   if (error) {
     return (error as { status?: number }).status === 404
-      ? <ReadinessState title="Product unavailable" description="This product was not found in the live M&E Shopify catalog." actionText="Continue Shopping" actionHref="/" />
+      ? <ReadinessState title="Product unavailable" description="This product was not found in the M&E catalog." actionText="Continue Shopping" actionHref="/" />
       : <ErrorState error="Product details are temporarily unavailable." />;
   }
 
@@ -300,13 +300,13 @@ export default function Product() {
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-primary">
                   <PackageCheck className="w-5 h-5" />
                 </div>
-                <span className="font-medium">Live inventory<br/>from Shopify</span>
+                <span className="font-medium">Live inventory<br/>from catalog</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-foreground/70">
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-primary">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
-                <span className="font-medium">Secure Shopify<br/>checkout</span>
+                <span className="font-medium">Secure in-app<br/>checkout</span>
               </div>
             </div>
           </div>

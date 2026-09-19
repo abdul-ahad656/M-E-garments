@@ -32,9 +32,8 @@ vi.mock("@clerk/express", () => ({
   },
 }));
 vi.mock("../lib/admin-repository", () => adminData);
-vi.mock("../lib/shopify", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../lib/shopify")>()),
-  getShopifyCatalogHealth: catalogHealth,
+vi.mock("../lib/commerce-repository", () => ({
+  getCatalogHealth: catalogHealth,
 }));
 
 import app from "../app";

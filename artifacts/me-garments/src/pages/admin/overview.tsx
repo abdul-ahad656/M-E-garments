@@ -43,12 +43,12 @@ export default function AdminOverviewPage() {
             <div>
               <h2 className="font-serif text-2xl font-semibold">Catalog health</h2>
               <p className="text-sm text-muted-foreground">
-                Live pull from Shopify Storefront catalog.
+                Live check against the Supabase product catalog.
               </p>
             </div>
             <Button variant="outline" onClick={() => catalog.refetch()} disabled={catalog.isFetching}>
               <RefreshCw className={`mr-2 h-4 w-4 ${catalog.isFetching ? "animate-spin" : ""}`} />
-              Pull latest
+              Refresh
             </Button>
           </div>
           {catalog.error && (
@@ -56,7 +56,7 @@ export default function AdminOverviewPage() {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Catalog health unavailable</AlertTitle>
               <AlertDescription>
-                The live Shopify catalog could not be checked. No cached result is being shown.
+                The catalog could not be checked. No cached result is being shown.
               </AlertDescription>
             </Alert>
           )}
@@ -71,7 +71,7 @@ export default function AdminOverviewPage() {
                 <MetricCard
                   label="Available for sale"
                   value={catalog.data.availableProducts}
-                  detail="Based on current Shopify availability"
+                  detail="Based on current catalog availability"
                 />
                 <MetricCard
                   label="Products needing attention"
@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
                     <div>
                       <CardTitle>Catalog checks</CardTitle>
                       <CardDescription>
-                        Pull-based sync ·{" "}
+                        Pull-based check ·{" "}
                         {catalog.data.sync.lastSyncedAt
                           ? `last persisted ${new Date(catalog.data.sync.lastSyncedAt).toLocaleString()}`
                           : "sync state was not persisted"}
@@ -102,7 +102,7 @@ export default function AdminOverviewPage() {
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Sync-state storage unavailable</AlertTitle>
                       <AlertDescription>
-                        The live Shopify pull completed, but Supabase could not record its sync state.
+                        The catalog check completed, but sync state could not be recorded.
                       </AlertDescription>
                     </Alert>
                   )}

@@ -45,7 +45,7 @@ export default function AdminProductsPage() {
           <div>
             <h2 className="font-serif text-2xl font-semibold">Products</h2>
             <p className="text-sm text-muted-foreground">
-              Create and edit Shopify products. Shopify remains the source of truth.
+              Create and edit catalog products. Supabase is the source of truth; R2 stores image files.
             </p>
           </div>
           <Button asChild>
@@ -79,7 +79,7 @@ export default function AdminProductsPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Products unavailable</AlertTitle>
             <AlertDescription>
-              Shopify Admin could not return the product list.
+              The product list could not be loaded.
             </AlertDescription>
           </Alert>
         )}
@@ -87,7 +87,7 @@ export default function AdminProductsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Catalog</CardTitle>
-            <CardDescription>Live Shopify Admin product list</CardDescription>
+            <CardDescription>Supabase catalog products</CardDescription>
           </CardHeader>
           <CardContent className="divide-y">
             {products.isPending && (

@@ -1,10 +1,10 @@
 ---
 name: Commerce integration boundaries
-description: Durable platform constraints for the M&E Shopify integration.
+description: Durable platform constraints for M&E commerce on Supabase + R2 + Clerk.
 ---
 
-Shopify remains the system of record for products, variants, prices, inventory, carts, checkout, orders, payments, and fulfillment. Buyer requests use the connector-provided Storefront configuration. Staff-authenticated Admin GraphQL reads and writes are proxied through the API server (`SHOPIFY_ADMIN_ACCESS_TOKEN`) and never invent parallel commerce rows in Supabase. Customer order lookup still requires a verified server-derived identity, an exact unambiguous customer match, a customer-scoped order request, and ownership validation on every returned order. Treat catalog and order synchronization as pull/revalidation because this connector path does not support Shopify webhooks.
+Supabase Postgres is the system of record for products, variants, prices, inventory, carts, checkout, and orders. The API server reads and writes commerce tables via PostgREST with the service role (`artifacts/api-server/src/lib/supabase.ts`); do not invent a parallel catalog outside those tables. Cloudflare R2 stores image file bytes only — persist public URLs on `product_images`, never treat R2 as a second product database. Clerk owns customer and staff identity; checkout requires a signed-in customer so account orders stay ownership-safe via `clerk_user_id`. Checkout creates unpaid orders (`payment_status: unpaid`) until Stripe (or another gateway) is added; staff may mark orders paid manually. There is no Shopify dependency.
 
-**Why:** These are connector-specific platform boundaries that are not evident from the storefront code and prevent unsafe auth handling or a false real-time synchronization design.
+**Why:** These boundaries keep commerce truth in one place, prevent identity leakage across accounts, and leave a clean hook for future card capture without rewriting the order model.
 
-**How to apply:** Use Shopify-hosted checkout and verified Storefront data for buyer flows. Route Admin reads and staff commerce writes through the API proxy, fail closed on ambiguous customer identity, never fabricate commerce records or create parallel order/product truth in Supabase, and do not promise webhook-driven freshness.
+**How to apply:** Route buyer catalog/cart/checkout and staff product/inventory/order ops through the commerce/cart/order repositories. Use R2 only for media upload URLs saved on products. Scope customer order reads to the authenticated Clerk user. Prefer mark-paid / refund status updates over fabricating payment gateway responses.

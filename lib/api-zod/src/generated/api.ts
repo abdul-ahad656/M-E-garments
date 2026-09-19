@@ -20,7 +20,6 @@ export const HealthCheckResponse = zod.object({
  * @summary Get commerce integration readiness
  */
 export const GetStorefrontStatusResponse = zod.object({
-  "shopifyConnected": zod.boolean(),
   "aiAvailable": zod.boolean(),
   "catalogReady": zod.boolean(),
   "message": zod.string()
@@ -28,7 +27,7 @@ export const GetStorefrontStatusResponse = zod.object({
 
 
 /**
- * @summary Get real Shopify-powered homepage merchandising
+ * @summary Get real catalog homepage merchandising
  */
 export const GetStorefrontHomeResponse = zod.object({
   "groups": zod.array(zod.object({
@@ -62,7 +61,7 @@ export const GetStorefrontHomeResponse = zod.object({
 
 
 /**
- * @summary Search the live Shopify catalog
+ * @summary Search the live catalog
  */
 export const searchProductsQueryQueryMax = 200;
 
@@ -112,7 +111,7 @@ export const SearchProductsResponse = zod.object({
 
 
 /**
- * @summary Get a live Shopify product by handle
+ * @summary Get a live product by handle
  */
 export const getProductPathHandleMax = 255;
 
@@ -170,7 +169,7 @@ export const GetProductResponse = zod.object({
 
 
 /**
- * @summary Get a Shopify cart
+ * @summary Get a cart
  */
 
 
@@ -186,7 +185,6 @@ export const getCartResponseTotalQuantityMin = 0;
 
 export const GetCartResponse = zod.object({
   "id": zod.string(),
-  "checkoutUrl": zod.string().url(),
   "totalQuantity": zod.number().int().min(getCartResponseTotalQuantityMin),
   "lines": zod.array(zod.object({
   "id": zod.string(),
@@ -232,7 +230,7 @@ export const GetCartResponse = zod.object({
 
 
 /**
- * @summary Create a Shopify cart
+ * @summary Create a cart
  */
 
 export const createCartBodyQuantityDefault = 1;
@@ -252,7 +250,6 @@ export const createCartResponseTotalQuantityMin = 0;
 
 export const CreateCartResponse = zod.object({
   "id": zod.string(),
-  "checkoutUrl": zod.string().url(),
   "totalQuantity": zod.number().int().min(createCartResponseTotalQuantityMin),
   "lines": zod.array(zod.object({
   "id": zod.string(),
@@ -298,7 +295,7 @@ export const CreateCartResponse = zod.object({
 
 
 /**
- * @summary Add a verified variant to a Shopify cart
+ * @summary Add a verified variant to a cart
  */
 
 
@@ -320,7 +317,6 @@ export const addCartLineResponseTotalQuantityMin = 0;
 
 export const AddCartLineResponse = zod.object({
   "id": zod.string(),
-  "checkoutUrl": zod.string().url(),
   "totalQuantity": zod.number().int().min(addCartLineResponseTotalQuantityMin),
   "lines": zod.array(zod.object({
   "id": zod.string(),
@@ -366,7 +362,7 @@ export const AddCartLineResponse = zod.object({
 
 
 /**
- * @summary Update a Shopify cart line quantity
+ * @summary Update a cart line quantity
  */
 
 
@@ -387,7 +383,6 @@ export const updateCartLineResponseTotalQuantityMin = 0;
 
 export const UpdateCartLineResponse = zod.object({
   "id": zod.string(),
-  "checkoutUrl": zod.string().url(),
   "totalQuantity": zod.number().int().min(updateCartLineResponseTotalQuantityMin),
   "lines": zod.array(zod.object({
   "id": zod.string(),
@@ -433,7 +428,7 @@ export const UpdateCartLineResponse = zod.object({
 
 
 /**
- * @summary Remove a line from a Shopify cart
+ * @summary Remove a line from a cart
  */
 
 
@@ -451,7 +446,6 @@ export const removeCartLineResponseTotalQuantityMin = 0;
 
 export const RemoveCartLineResponse = zod.object({
   "id": zod.string(),
-  "checkoutUrl": zod.string().url(),
   "totalQuantity": zod.number().int().min(removeCartLineResponseTotalQuantityMin),
   "lines": zod.array(zod.object({
   "id": zod.string(),
@@ -493,6 +487,82 @@ export const RemoveCartLineResponse = zod.object({
   "currencyCode": zod.string()
 })
 })
+})
+
+
+/**
+ * @summary Place an unpaid order from a cart (requires signed-in customer)
+ */
+
+export const checkoutCartBodyNotesMax = 2000;
+
+export const checkoutCartBodyShippingAddressNameMax = 200;
+
+export const checkoutCartBodyShippingAddressLine1Max = 200;
+
+export const checkoutCartBodyShippingAddressLine2Max = 200;
+
+export const checkoutCartBodyShippingAddressCityMax = 100;
+
+export const checkoutCartBodyShippingAddressRegionMax = 100;
+
+export const checkoutCartBodyShippingAddressPostalCodeMax = 32;
+
+export const checkoutCartBodyShippingAddressCountryMin = 2;
+export const checkoutCartBodyShippingAddressCountryMax = 56;
+
+export const checkoutCartBodyShippingAddressPhoneMax = 40;
+
+
+
+export const CheckoutCartBody = zod.object({
+  "cartId": zod.string().min(1),
+  "email": zod.string().email(),
+  "notes": zod.string().max(checkoutCartBodyNotesMax).nullish(),
+  "shippingAddress": zod.object({
+  "name": zod.string().min(1).max(checkoutCartBodyShippingAddressNameMax),
+  "line1": zod.string().min(1).max(checkoutCartBodyShippingAddressLine1Max),
+  "line2": zod.string().max(checkoutCartBodyShippingAddressLine2Max).nullish(),
+  "city": zod.string().min(1).max(checkoutCartBodyShippingAddressCityMax),
+  "region": zod.string().max(checkoutCartBodyShippingAddressRegionMax).nullish(),
+  "postalCode": zod.string().max(checkoutCartBodyShippingAddressPostalCodeMax).nullish(),
+  "country": zod.string().min(checkoutCartBodyShippingAddressCountryMin).max(checkoutCartBodyShippingAddressCountryMax),
+  "phone": zod.string().max(checkoutCartBodyShippingAddressPhoneMax).nullish()
+})
+})
+
+
+
+
+export const CheckoutCartResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "processedAt": zod.coerce.date(),
+  "displayFinancialStatus": zod.string().nullable(),
+  "displayFulfillmentStatus": zod.string().nullable(),
+  "totalPrice": zod.object({
+  "amount": zod.string(),
+  "currencyCode": zod.string()
+}),
+  "lineItems": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "variantTitle": zod.string().nullable(),
+  "quantity": zod.number().int().min(1),
+  "price": zod.object({
+  "amount": zod.string(),
+  "currencyCode": zod.string()
+})
+})),
+  "fulfillments": zod.array(zod.object({
+  "id": zod.string(),
+  "status": zod.string(),
+  "tracking": zod.array(zod.object({
+  "company": zod.string().nullable(),
+  "number": zod.string().nullable(),
+  "url": zod.string().url()
+}))
+}))
 })
 
 
@@ -573,7 +643,7 @@ export const UpdateCustomerProfileResponse = zod.object({
  * @summary List the authenticated customer's wishlist
  */
 export const ListWishlistItemsResponseItem = zod.object({
-  "shopifyProductId": zod.string(),
+  "productId": zod.string(),
   "productHandle": zod.string(),
   "createdAt": zod.coerce.date()
 })
@@ -583,19 +653,19 @@ export const ListWishlistItemsResponse = zod.array(ListWishlistItemsResponseItem
 /**
  * @summary Add or refresh an item in the authenticated customer's wishlist
  */
-export const saveWishlistItemBodyShopifyProductIdMax = 255;
+export const saveWishlistItemBodyProductIdMax = 255;
 
 export const saveWishlistItemBodyProductHandleMax = 255;
 
 
 
 export const SaveWishlistItemBody = zod.object({
-  "shopifyProductId": zod.string().min(1).max(saveWishlistItemBodyShopifyProductIdMax),
+  "productId": zod.string().min(1).max(saveWishlistItemBodyProductIdMax),
   "productHandle": zod.string().min(1).max(saveWishlistItemBodyProductHandleMax)
 })
 
 export const SaveWishlistItemResponse = zod.object({
-  "shopifyProductId": zod.string(),
+  "productId": zod.string(),
   "productHandle": zod.string(),
   "createdAt": zod.coerce.date()
 })
@@ -608,7 +678,7 @@ export const SaveWishlistItemResponse = zod.object({
 
 
 export const DeleteWishlistItemQueryParams = zod.object({
-  "shopifyProductId": zod.coerce.string().min(1)
+  "productId": zod.coerce.string().min(1)
 })
 
 export const DeleteWishlistItemResponse = zod.void()
@@ -618,7 +688,7 @@ export const DeleteWishlistItemResponse = zod.void()
  * @summary List the authenticated customer's recently viewed products
  */
 export const ListRecentlyViewedItemsResponseItem = zod.object({
-  "shopifyProductId": zod.string(),
+  "productId": zod.string(),
   "productHandle": zod.string(),
   "viewedAt": zod.coerce.date()
 })
@@ -628,26 +698,26 @@ export const ListRecentlyViewedItemsResponse = zod.array(ListRecentlyViewedItems
 /**
  * @summary Record a product view for the authenticated customer
  */
-export const saveRecentlyViewedItemBodyShopifyProductIdMax = 255;
+export const saveRecentlyViewedItemBodyProductIdMax = 255;
 
 export const saveRecentlyViewedItemBodyProductHandleMax = 255;
 
 
 
 export const SaveRecentlyViewedItemBody = zod.object({
-  "shopifyProductId": zod.string().min(1).max(saveRecentlyViewedItemBodyShopifyProductIdMax),
+  "productId": zod.string().min(1).max(saveRecentlyViewedItemBodyProductIdMax),
   "productHandle": zod.string().min(1).max(saveRecentlyViewedItemBodyProductHandleMax)
 })
 
 export const SaveRecentlyViewedItemResponse = zod.object({
-  "shopifyProductId": zod.string(),
+  "productId": zod.string(),
   "productHandle": zod.string(),
   "viewedAt": zod.coerce.date()
 })
 
 
 /**
- * @summary Look up live Shopify orders using the authenticated customer's Clerk primary email
+ * @summary List orders for the authenticated customer
  */
 export const ListCustomerOrdersResponseItem = zod.object({
   "id": zod.string(),
@@ -664,7 +734,7 @@ export const ListCustomerOrdersResponse = zod.array(ListCustomerOrdersResponseIt
 
 
 /**
- * @summary Get one live Shopify order owned by the authenticated customer
+ * @summary Get one order owned by the authenticated customer
  */
 export const getCustomerOrderPathOrderIdMax = 32;
 
@@ -713,7 +783,7 @@ export const GetCustomerOrderResponse = zod.object({
 
 
 /**
- * @summary Pull and assess the live Shopify catalog
+ * @summary Pull and assess the live catalog
  */
 export const getAdminCatalogHealthResponseTotalProductsMin = 0;
 
@@ -853,7 +923,27 @@ export const GetAdminAnalyticsResponse = zod.object({
 
 
 /**
- * @summary List Shopify products for staff commerce ops
+ * @summary Upload product images to Cloudflare R2 and return public URLs for product_images
+ */
+export const uploadAdminMediaBodyFilesMax = 20;
+
+
+
+export const UploadAdminMediaBody = zod.object({
+  "files": zod.array(zod.instanceof(Blob)).min(1).max(uploadAdminMediaBodyFilesMax)
+})
+
+export const uploadAdminMediaResponseUrlsMax = 20;
+
+
+
+export const UploadAdminMediaResponse = zod.object({
+  "urls": zod.array(zod.string().url()).min(1).max(uploadAdminMediaResponseUrlsMax)
+})
+
+
+/**
+ * @summary List products for staff commerce ops
  */
 export const listAdminProductsQueryCursorMax = 512;
 
@@ -885,7 +975,7 @@ export const ListAdminProductsResponse = zod.object({
 
 
 /**
- * @summary Create a Shopify product with variants and image URLs
+ * @summary Create a product with variants and image URLs
  */
 export const createAdminProductBodyTitleMax = 255;
 
@@ -907,6 +997,9 @@ export const createAdminProductBodyVariantsItemPriceRegExp = new RegExp('^[0-9]+
 export const createAdminProductBodyVariantsItemSkuMax = 100;
 
 export const createAdminProductBodyVariantsItemCompareAtPriceRegExp = new RegExp('^[0-9]+(\\.[0-9]{1,2})?$');
+export const createAdminProductBodyVariantsItemInventoryQuantityDefault = 0;
+export const createAdminProductBodyVariantsItemInventoryQuantityMin = 0;
+
 export const createAdminProductBodyVariantsMax = 100;
 
 export const createAdminProductBodyImageUrlsMax = 20;
@@ -924,7 +1017,8 @@ export const CreateAdminProductBody = zod.object({
   "optionValues": zod.array(zod.string().min(1).max(createAdminProductBodyVariantsItemOptionValuesItemMax)).min(1),
   "price": zod.string().regex(createAdminProductBodyVariantsItemPriceRegExp),
   "sku": zod.string().max(createAdminProductBodyVariantsItemSkuMax).nullish(),
-  "compareAtPrice": zod.string().regex(createAdminProductBodyVariantsItemCompareAtPriceRegExp).nullish()
+  "compareAtPrice": zod.string().regex(createAdminProductBodyVariantsItemCompareAtPriceRegExp).nullish(),
+  "inventoryQuantity": zod.number().int().min(createAdminProductBodyVariantsItemInventoryQuantityMin).default(createAdminProductBodyVariantsItemInventoryQuantityDefault)
 })).min(1).max(createAdminProductBodyVariantsMax),
   "imageUrls": zod.array(zod.string().url()).max(createAdminProductBodyImageUrlsMax).optional()
 })
@@ -966,7 +1060,7 @@ export const CreateAdminProductResponse = zod.object({
 
 
 /**
- * @summary Get a Shopify product for editing
+ * @summary Get a product for editing
  */
 export const getAdminProductPathIdMax = 255;
 
@@ -1013,7 +1107,7 @@ export const GetAdminProductResponse = zod.object({
 
 
 /**
- * @summary Update a Shopify product, variant prices, and image URLs
+ * @summary Update a product, variant prices, and image URLs
  */
 export const updateAdminProductPathIdMax = 255;
 
@@ -1038,6 +1132,8 @@ export const updateAdminProductBodyVariantsItemPriceRegExp = new RegExp('^[0-9]+
 export const updateAdminProductBodyVariantsItemCompareAtPriceRegExp = new RegExp('^[0-9]+(\\.[0-9]{1,2})?$');
 export const updateAdminProductBodyVariantsItemSkuMax = 100;
 
+export const updateAdminProductBodyVariantsItemInventoryQuantityMin = 0;
+
 export const updateAdminProductBodyVariantsMax = 100;
 
 export const updateAdminProductBodyImageUrlsMax = 20;
@@ -1054,7 +1150,8 @@ export const UpdateAdminProductBody = zod.object({
   "id": zod.string().min(1),
   "price": zod.string().regex(updateAdminProductBodyVariantsItemPriceRegExp),
   "compareAtPrice": zod.string().regex(updateAdminProductBodyVariantsItemCompareAtPriceRegExp).nullish(),
-  "sku": zod.string().max(updateAdminProductBodyVariantsItemSkuMax).nullish()
+  "sku": zod.string().max(updateAdminProductBodyVariantsItemSkuMax).nullish(),
+  "inventoryQuantity": zod.number().int().min(updateAdminProductBodyVariantsItemInventoryQuantityMin).optional()
 })).max(updateAdminProductBodyVariantsMax).optional(),
   "imageUrls": zod.array(zod.string().url()).max(updateAdminProductBodyImageUrlsMax).optional()
 })
@@ -1093,6 +1190,20 @@ export const UpdateAdminProductResponse = zod.object({
 })),
   "updatedAt": zod.coerce.date()
 })
+
+
+/**
+ * @summary Delete a product and its variants from the catalog
+ */
+export const deleteAdminProductPathIdMax = 255;
+
+
+
+export const DeleteAdminProductParams = zod.object({
+  "id": zod.coerce.string().min(1).max(deleteAdminProductPathIdMax)
+})
+
+export const DeleteAdminProductResponse = zod.void()
 
 
 /**
@@ -1158,7 +1269,7 @@ export const AdjustAdminInventoryResponse = zod.object({
 
 
 /**
- * @summary List Shopify orders for staff ops
+ * @summary List orders for staff ops
  */
 export const listAdminOrdersQueryCursorMax = 512;
 
@@ -1195,7 +1306,7 @@ export const ListAdminOrdersResponse = zod.object({
 
 
 /**
- * @summary Get a Shopify order for staff ops
+ * @summary Get an order for staff ops
  */
 export const getAdminOrderPathIdMax = 255;
 
@@ -1413,7 +1524,71 @@ export const RefundAdminOrderResponse = zod.object({
 
 
 /**
- * @summary Cancel a Shopify order
+ * @summary Mark an unpaid order as paid (manual payment until Stripe)
+ */
+export const markAdminOrderPaidPathIdMax = 255;
+
+
+
+export const MarkAdminOrderPaidParams = zod.object({
+  "id": zod.coerce.string().min(1).max(markAdminOrderPaidPathIdMax)
+})
+
+export const markAdminOrderPaidResponseLineItemsItemQuantityMin = 0;
+
+export const markAdminOrderPaidResponseLineItemsItemFulfillableQuantityMin = 0;
+
+export const markAdminOrderPaidResponseFulfillmentOrdersItemLineItemsItemRemainingQuantityMin = 0;
+
+
+
+export const MarkAdminOrderPaidResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "processedAt": zod.coerce.date(),
+  "displayFinancialStatus": zod.string().nullable(),
+  "displayFulfillmentStatus": zod.string().nullable(),
+  "cancelledAt": zod.coerce.date().nullable(),
+  "totalPrice": zod.object({
+  "amount": zod.string(),
+  "currencyCode": zod.string()
+}),
+  "customerEmail": zod.string().nullable(),
+  "customerName": zod.string().nullable(),
+  "lineItems": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "variantTitle": zod.string().nullable(),
+  "quantity": zod.number().int().min(markAdminOrderPaidResponseLineItemsItemQuantityMin),
+  "fulfillableQuantity": zod.number().int().min(markAdminOrderPaidResponseLineItemsItemFulfillableQuantityMin),
+  "price": zod.object({
+  "amount": zod.string(),
+  "currencyCode": zod.string()
+}),
+  "variantId": zod.string().nullable()
+})),
+  "fulfillments": zod.array(zod.object({
+  "id": zod.string(),
+  "status": zod.string(),
+  "tracking": zod.array(zod.object({
+  "company": zod.string().nullable(),
+  "number": zod.string().nullable(),
+  "url": zod.string().url()
+}))
+})),
+  "fulfillmentOrders": zod.array(zod.object({
+  "id": zod.string(),
+  "status": zod.string(),
+  "lineItems": zod.array(zod.object({
+  "id": zod.string(),
+  "remainingQuantity": zod.number().int().min(markAdminOrderPaidResponseFulfillmentOrdersItemLineItemsItemRemainingQuantityMin)
+}))
+}))
+})
+
+
+/**
+ * @summary Cancel an order
  */
 export const cancelAdminOrderPathIdMax = 255;
 

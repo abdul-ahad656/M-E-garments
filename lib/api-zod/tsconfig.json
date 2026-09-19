@@ -4,6 +4,7 @@
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
+    "lib": ["ES2022", "DOM"],
     "outDir": "dist",
     "rootDir": "src"
   },

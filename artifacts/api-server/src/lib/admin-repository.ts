@@ -79,7 +79,7 @@ export async function recordCatalogSync(checkedAt: string, metadata: object) {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=representation" },
     body: JSON.stringify({
-      key: "shopify-catalog-health",
+      key: "catalog-health",
       last_synced_at: checkedAt,
       metadata,
       updated_at: checkedAt,

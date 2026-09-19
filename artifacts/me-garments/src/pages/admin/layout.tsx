@@ -136,7 +136,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           Store operations
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Manage Shopify catalog, inventory, and orders alongside governed store content.
+          Manage catalog, inventory, and orders alongside governed store content.
         </p>
       </div>
 

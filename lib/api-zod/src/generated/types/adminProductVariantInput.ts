@@ -25,4 +25,6 @@ export interface AdminProductVariantInput {
      * @pattern ^[0-9]+(\.[0-9]{1,2})?$
      */
   compareAtPrice?: string | null;
+  /** @minimum 0 */
+  inventoryQuantity?: number;
 }

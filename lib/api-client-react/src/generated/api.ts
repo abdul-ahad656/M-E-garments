@@ -25,6 +25,8 @@ import type {
   AdminInventoryAdjustInput,
   AdminInventoryItem,
   AdminInventoryList,
+  AdminMediaUploadInput,
+  AdminMediaUploadResult,
   AdminOrderCancelInput,
   AdminOrderDetail,
   AdminOrderFulfillInput,
@@ -46,6 +48,8 @@ import type {
   CartLineAddInput,
   CartLineRemoveInput,
   CartLineUpdateInput,
+  CheckoutInput,
+  CheckoutOrder,
   CustomerProfile,
   CustomerProfileInput,
   DeleteWishlistItemParams,
@@ -260,7 +264,7 @@ export const getGetStorefrontHomeUrl = () => {
 }
 
 /**
- * @summary Get real Shopify-powered homepage merchandising
+ * @summary Get real catalog homepage merchandising
  */
 export const getStorefrontHome = async ( options?: Parameters<typeof customFetch>[1]): Promise<StorefrontHome> => {
 
@@ -307,7 +311,7 @@ export type GetStorefrontHomeQueryError = ErrorType<ApiError>
 
 
 /**
- * @summary Get real Shopify-powered homepage merchandising
+ * @summary Get real catalog homepage merchandising
  */
 
 export function useGetStorefrontHome<TData = Awaited<ReturnType<typeof getStorefrontHome>>, TError = ErrorType<ApiError>>(
@@ -344,7 +348,7 @@ export const getSearchProductsUrl = (params?: SearchProductsParams,) => {
 }
 
 /**
- * @summary Search the live Shopify catalog
+ * @summary Search the live catalog
  */
 export const searchProducts = async (params?: SearchProductsParams, options?: Parameters<typeof customFetch>[1]): Promise<ProductSearchResult> => {
 
@@ -391,7 +395,7 @@ export type SearchProductsQueryError = ErrorType<ApiError>
 
 
 /**
- * @summary Search the live Shopify catalog
+ * @summary Search the live catalog
  */
 
 export function useSearchProducts<TData = Awaited<ReturnType<typeof searchProducts>>, TError = ErrorType<ApiError>>(
@@ -421,7 +425,7 @@ export const getGetProductUrl = (handle: string,) => {
 }
 
 /**
- * @summary Get a live Shopify product by handle
+ * @summary Get a live product by handle
  */
 export const getProduct = async (handle: string, options?: Parameters<typeof customFetch>[1]): Promise<ProductDetail> => {
 
@@ -468,7 +472,7 @@ export type GetProductQueryError = ErrorType<ApiError>
 
 
 /**
- * @summary Get a live Shopify product by handle
+ * @summary Get a live product by handle
  */
 
 export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = ErrorType<ApiError>>(
@@ -505,7 +509,7 @@ export const getGetCartUrl = (params: GetCartParams,) => {
 }
 
 /**
- * @summary Get a Shopify cart
+ * @summary Get a cart
  */
 export const getCart = async (params: GetCartParams, options?: Parameters<typeof customFetch>[1]): Promise<Cart> => {
 
@@ -552,7 +556,7 @@ export type GetCartQueryError = ErrorType<ApiError>
 
 
 /**
- * @summary Get a Shopify cart
+ * @summary Get a cart
  */
 
 export function useGetCart<TData = Awaited<ReturnType<typeof getCart>>, TError = ErrorType<ApiError>>(
@@ -582,7 +586,7 @@ export const getCreateCartUrl = () => {
 }
 
 /**
- * @summary Create a Shopify cart
+ * @summary Create a cart
  */
 export const createCart = async (cartCreateInput: CartCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<Cart> => {
 
@@ -648,7 +652,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateCartMutationVariables = {data: BodyType<CartCreateInput>}
 
     /**
- * @summary Create a Shopify cart
+ * @summary Create a cart
  */
 export const useCreateCart = <TError = ErrorType<ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCart>>, TError,CreateCartMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -670,7 +674,7 @@ export const getAddCartLineUrl = () => {
 }
 
 /**
- * @summary Add a verified variant to a Shopify cart
+ * @summary Add a verified variant to a cart
  */
 export const addCartLine = async (cartLineAddInput: CartLineAddInput, options?: Parameters<typeof customFetch>[1]): Promise<Cart> => {
 
@@ -736,7 +740,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AddCartLineMutationVariables = {data: BodyType<CartLineAddInput>}
 
     /**
- * @summary Add a verified variant to a Shopify cart
+ * @summary Add a verified variant to a cart
  */
 export const useAddCartLine = <TError = ErrorType<ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCartLine>>, TError,AddCartLineMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -758,7 +762,7 @@ export const getUpdateCartLineUrl = () => {
 }
 
 /**
- * @summary Update a Shopify cart line quantity
+ * @summary Update a cart line quantity
  */
 export const updateCartLine = async (cartLineUpdateInput: CartLineUpdateInput, options?: Parameters<typeof customFetch>[1]): Promise<Cart> => {
 
@@ -824,7 +828,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateCartLineMutationVariables = {data: BodyType<CartLineUpdateInput>}
 
     /**
- * @summary Update a Shopify cart line quantity
+ * @summary Update a cart line quantity
  */
 export const useUpdateCartLine = <TError = ErrorType<ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCartLine>>, TError,UpdateCartLineMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -846,7 +850,7 @@ export const getRemoveCartLineUrl = () => {
 }
 
 /**
- * @summary Remove a line from a Shopify cart
+ * @summary Remove a line from a cart
  */
 export const removeCartLine = async (cartLineRemoveInput: CartLineRemoveInput, options?: Parameters<typeof customFetch>[1]): Promise<Cart> => {
 
@@ -912,7 +916,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RemoveCartLineMutationVariables = {data: BodyType<CartLineRemoveInput>}
 
     /**
- * @summary Remove a line from a Shopify cart
+ * @summary Remove a line from a cart
  */
 export const useRemoveCartLine = <TError = ErrorType<ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCartLine>>, TError,RemoveCartLineMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -923,6 +927,94 @@ export const useRemoveCartLine = <TError = ErrorType<ApiError>,
         TContext
       > => {
       return useMutation(getRemoveCartLineMutationOptions(options));
+    }
+
+export const getCheckoutCartUrl = () => {
+
+
+
+
+  return `/api/storefront/checkout`
+}
+
+/**
+ * @summary Place an unpaid order from a cart (requires signed-in customer)
+ */
+export const checkoutCart = async (checkoutInput: CheckoutInput, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutOrder> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CheckoutOrder>(getCheckoutCartUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(checkoutInput)
+  }
+);}
+
+
+
+
+
+export const getCheckoutCartMutationKey = () => ['checkoutCart'] as const;
+
+export const getCheckoutCartMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutCart>>, TError,CheckoutCartMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutCart>>, TError,CheckoutCartMutationVariables, TContext> => {
+
+const mutationKey = getCheckoutCartMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutCart>>, CheckoutCartMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  checkoutCart(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutCartMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutCart>>>
+    export type CheckoutCartMutationBody = BodyType<CheckoutInput>
+    export type CheckoutCartMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ApiError>
+    export type CheckoutCartMutationVariables = {data: BodyType<CheckoutInput>}
+
+    /**
+ * @summary Place an unpaid order from a cart (requires signed-in customer)
+ */
+export const useCheckoutCart = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutCart>>, TError,CheckoutCartMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutCart>>,
+        TError,
+        CheckoutCartMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutCartMutationOptions(options));
     }
 
 export const getQueryShoppingAssistantUrl = () => {
@@ -1598,7 +1690,7 @@ export const getListCustomerOrdersUrl = () => {
 }
 
 /**
- * @summary Look up live Shopify orders using the authenticated customer's Clerk primary email
+ * @summary List orders for the authenticated customer
  */
 export const listCustomerOrders = async ( options?: Parameters<typeof customFetch>[1]): Promise<OrderReference[]> => {
 
@@ -1645,7 +1737,7 @@ export type ListCustomerOrdersQueryError = ErrorType<UnauthorizedResponse | ApiE
 
 
 /**
- * @summary Look up live Shopify orders using the authenticated customer's Clerk primary email
+ * @summary List orders for the authenticated customer
  */
 
 export function useListCustomerOrders<TData = Awaited<ReturnType<typeof listCustomerOrders>>, TError = ErrorType<UnauthorizedResponse | ApiError>>(
@@ -1675,7 +1767,7 @@ export const getGetCustomerOrderUrl = (orderId: string,) => {
 }
 
 /**
- * @summary Get one live Shopify order owned by the authenticated customer
+ * @summary Get one order owned by the authenticated customer
  */
 export const getCustomerOrder = async (orderId: string, options?: Parameters<typeof customFetch>[1]): Promise<OrderDetail> => {
 
@@ -1722,7 +1814,7 @@ export type GetCustomerOrderQueryError = ErrorType<BadRequestResponse | Unauthor
 
 
 /**
- * @summary Get one live Shopify order owned by the authenticated customer
+ * @summary Get one order owned by the authenticated customer
  */
 
 export function useGetCustomerOrder<TData = Awaited<ReturnType<typeof getCustomerOrder>>, TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ApiError>>(
@@ -1752,7 +1844,7 @@ export const getGetAdminCatalogHealthUrl = () => {
 }
 
 /**
- * @summary Pull and assess the live Shopify catalog
+ * @summary Pull and assess the live catalog
  */
 export const getAdminCatalogHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminCatalogHealth> => {
 
@@ -1799,7 +1891,7 @@ export type GetAdminCatalogHealthQueryError = ErrorType<UnauthorizedResponse | F
 
 
 /**
- * @summary Pull and assess the live Shopify catalog
+ * @summary Pull and assess the live catalog
  */
 
 export function useGetAdminCatalogHealth<TData = Awaited<ReturnType<typeof getAdminCatalogHealth>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>>(
@@ -2306,6 +2398,82 @@ export function useGetAdminAnalytics<TData = Awaited<ReturnType<typeof getAdminA
 
 
 
+export const getUploadAdminMediaUrl = () => {
+
+
+
+
+  return `/api/admin/media/upload`
+}
+
+/**
+ * @summary Upload product images to Cloudflare R2 and return public URLs for product_images
+ */
+export const uploadAdminMedia = async (adminMediaUploadInput: AdminMediaUploadInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminMediaUploadResult> => {
+    const formData = new FormData();
+adminMediaUploadInput.files.forEach(value => formData.append(`files`, value));
+
+  return customFetch<AdminMediaUploadResult>(getUploadAdminMediaUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUploadAdminMediaMutationKey = () => ['uploadAdminMedia'] as const;
+
+export const getUploadAdminMediaMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAdminMedia>>, TError,UploadAdminMediaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadAdminMedia>>, TError,UploadAdminMediaMutationVariables, TContext> => {
+
+const mutationKey = getUploadAdminMediaMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadAdminMedia>>, UploadAdminMediaMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadAdminMedia(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadAdminMediaMutationResult = NonNullable<Awaited<ReturnType<typeof uploadAdminMedia>>>
+    export type UploadAdminMediaMutationBody = BodyType<AdminMediaUploadInput>
+    export type UploadAdminMediaMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>
+    export type UploadAdminMediaMutationVariables = {data: BodyType<AdminMediaUploadInput>}
+
+    /**
+ * @summary Upload product images to Cloudflare R2 and return public URLs for product_images
+ */
+export const useUploadAdminMedia = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAdminMedia>>, TError,UploadAdminMediaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadAdminMedia>>,
+        TError,
+        UploadAdminMediaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadAdminMediaMutationOptions(options));
+    }
+
 export const getListAdminProductsUrl = (params?: ListAdminProductsParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -2322,7 +2490,7 @@ export const getListAdminProductsUrl = (params?: ListAdminProductsParams,) => {
 }
 
 /**
- * @summary List Shopify products for staff commerce ops
+ * @summary List products for staff commerce ops
  */
 export const listAdminProducts = async (params?: ListAdminProductsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminProductList> => {
 
@@ -2369,7 +2537,7 @@ export type ListAdminProductsQueryError = ErrorType<UnauthorizedResponse | Forbi
 
 
 /**
- * @summary List Shopify products for staff commerce ops
+ * @summary List products for staff commerce ops
  */
 
 export function useListAdminProducts<TData = Awaited<ReturnType<typeof listAdminProducts>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>>(
@@ -2399,7 +2567,7 @@ export const getCreateAdminProductUrl = () => {
 }
 
 /**
- * @summary Create a Shopify product with variants and image URLs
+ * @summary Create a product with variants and image URLs
  */
 export const createAdminProduct = async (adminProductCreateInput: AdminProductCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminProductDetail> => {
 
@@ -2465,7 +2633,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateAdminProductMutationVariables = {data: BodyType<AdminProductCreateInput>}
 
     /**
- * @summary Create a Shopify product with variants and image URLs
+ * @summary Create a product with variants and image URLs
  */
 export const useCreateAdminProduct = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminProduct>>, TError,CreateAdminProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2487,7 +2655,7 @@ export const getGetAdminProductUrl = (id: string,) => {
 }
 
 /**
- * @summary Get a Shopify product for editing
+ * @summary Get a product for editing
  */
 export const getAdminProduct = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminProductDetail> => {
 
@@ -2534,7 +2702,7 @@ export type GetAdminProductQueryError = ErrorType<UnauthorizedResponse | Forbidd
 
 
 /**
- * @summary Get a Shopify product for editing
+ * @summary Get a product for editing
  */
 
 export function useGetAdminProduct<TData = Awaited<ReturnType<typeof getAdminProduct>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>>(
@@ -2564,7 +2732,7 @@ export const getUpdateAdminProductUrl = (id: string,) => {
 }
 
 /**
- * @summary Update a Shopify product, variant prices, and image URLs
+ * @summary Update a product, variant prices, and image URLs
  */
 export const updateAdminProduct = async (id: string,
     adminProductUpdateInput: AdminProductUpdateInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminProductDetail> => {
@@ -2631,7 +2799,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateAdminProductMutationVariables = {id: string;data: BodyType<AdminProductUpdateInput>}
 
     /**
- * @summary Update a Shopify product, variant prices, and image URLs
+ * @summary Update a product, variant prices, and image URLs
  */
 export const useUpdateAdminProduct = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminProduct>>, TError,UpdateAdminProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2642,6 +2810,80 @@ export const useUpdateAdminProduct = <TError = ErrorType<BadRequestResponse | Un
         TContext
       > => {
       return useMutation(getUpdateAdminProductMutationOptions(options));
+    }
+
+export const getDeleteAdminProductUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/products/${id}`
+}
+
+/**
+ * @summary Delete a product and its variants from the catalog
+ */
+export const deleteAdminProduct = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminProductUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminProductMutationKey = () => ['deleteAdminProduct'] as const;
+
+export const getDeleteAdminProductMutationOptions = <TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,DeleteAdminProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,DeleteAdminProductMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminProductMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminProduct>>, DeleteAdminProductMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminProduct(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminProduct>>>
+
+    export type DeleteAdminProductMutationError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>
+    export type DeleteAdminProductMutationVariables = {id: string}
+
+    /**
+ * @summary Delete a product and its variants from the catalog
+ */
+export const useDeleteAdminProduct = <TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,DeleteAdminProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminProduct>>,
+        TError,
+        DeleteAdminProductMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminProductMutationOptions(options));
     }
 
 export const getListAdminInventoryUrl = (params?: ListAdminInventoryParams,) => {
@@ -2832,7 +3074,7 @@ export const getListAdminOrdersUrl = (params?: ListAdminOrdersParams,) => {
 }
 
 /**
- * @summary List Shopify orders for staff ops
+ * @summary List orders for staff ops
  */
 export const listAdminOrders = async (params?: ListAdminOrdersParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminOrderList> => {
 
@@ -2879,7 +3121,7 @@ export type ListAdminOrdersQueryError = ErrorType<UnauthorizedResponse | Forbidd
 
 
 /**
- * @summary List Shopify orders for staff ops
+ * @summary List orders for staff ops
  */
 
 export function useListAdminOrders<TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>>(
@@ -2909,7 +3151,7 @@ export const getGetAdminOrderUrl = (id: string,) => {
 }
 
 /**
- * @summary Get a Shopify order for staff ops
+ * @summary Get an order for staff ops
  */
 export const getAdminOrder = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminOrderDetail> => {
 
@@ -2956,7 +3198,7 @@ export type GetAdminOrderQueryError = ErrorType<UnauthorizedResponse | Forbidden
 
 
 /**
- * @summary Get a Shopify order for staff ops
+ * @summary Get an order for staff ops
  */
 
 export function useGetAdminOrder<TData = Awaited<ReturnType<typeof getAdminOrder>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>>(
@@ -3155,6 +3397,80 @@ export const useRefundAdminOrder = <TError = ErrorType<BadRequestResponse | Unau
       return useMutation(getRefundAdminOrderMutationOptions(options));
     }
 
+export const getMarkAdminOrderPaidUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/orders/${id}/mark-paid`
+}
+
+/**
+ * @summary Mark an unpaid order as paid (manual payment until Stripe)
+ */
+export const markAdminOrderPaid = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminOrderDetail> => {
+
+  return customFetch<AdminOrderDetail>(getMarkAdminOrderPaidUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMarkAdminOrderPaidMutationKey = () => ['markAdminOrderPaid'] as const;
+
+export const getMarkAdminOrderPaidMutationOptions = <TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAdminOrderPaid>>, TError,MarkAdminOrderPaidMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markAdminOrderPaid>>, TError,MarkAdminOrderPaidMutationVariables, TContext> => {
+
+const mutationKey = getMarkAdminOrderPaidMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markAdminOrderPaid>>, MarkAdminOrderPaidMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  markAdminOrderPaid(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkAdminOrderPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markAdminOrderPaid>>>
+
+    export type MarkAdminOrderPaidMutationError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>
+    export type MarkAdminOrderPaidMutationVariables = {id: string}
+
+    /**
+ * @summary Mark an unpaid order as paid (manual payment until Stripe)
+ */
+export const useMarkAdminOrderPaid = <TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAdminOrderPaid>>, TError,MarkAdminOrderPaidMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markAdminOrderPaid>>,
+        TError,
+        MarkAdminOrderPaidMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMarkAdminOrderPaidMutationOptions(options));
+    }
+
 export const getCancelAdminOrderUrl = (id: string,) => {
 
 
@@ -3164,7 +3480,7 @@ export const getCancelAdminOrderUrl = (id: string,) => {
 }
 
 /**
- * @summary Cancel a Shopify order
+ * @summary Cancel an order
  */
 export const cancelAdminOrder = async (id: string,
     adminOrderCancelInput: AdminOrderCancelInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminOrderDetail> => {
@@ -3231,7 +3547,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CancelAdminOrderMutationVariables = {id: string;data: BodyType<AdminOrderCancelInput>}
 
     /**
- * @summary Cancel a Shopify order
+ * @summary Cancel an order
  */
 export const useCancelAdminOrder = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelAdminOrder>>, TError,CancelAdminOrderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

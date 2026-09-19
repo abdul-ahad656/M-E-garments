@@ -30,7 +30,7 @@ function apiErrorMessage(error: unknown): string {
       return String((error as { message: unknown }).message);
     }
   }
-  return "Shopify rejected the inventory adjustment";
+  return "Inventory adjustment failed";
 }
 
 export default function AdminInventoryPage() {
@@ -89,7 +89,7 @@ export default function AdminInventoryPage() {
         <div>
           <h2 className="font-serif text-2xl font-semibold">Inventory</h2>
           <p className="text-sm text-muted-foreground">
-            Adjust available quantity at the primary Shopify location
+            Adjust available quantity for catalog variants
             {inventory.data ? ` (${inventory.data.locationName})` : ""}.
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function AdminInventoryPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Inventory unavailable</AlertTitle>
             <AlertDescription>
-              Shopify Admin could not return inventory levels.
+              Inventory levels could not be loaded.
             </AlertDescription>
           </Alert>
         )}

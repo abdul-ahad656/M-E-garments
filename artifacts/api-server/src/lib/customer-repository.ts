@@ -8,13 +8,13 @@ type ProfileRow = {
 };
 
 type WishlistRow = {
-  shopify_product_id: string;
+  product_id: string;
   product_handle: string;
   created_at: string;
 };
 
 type ViewedRow = {
-  shopify_product_id: string;
+  product_id: string;
   product_handle: string;
   viewed_at: string;
 };
@@ -76,10 +76,10 @@ export async function updateProfile(
 
 export async function listWishlist(authUserId: string) {
   const rows = await supabaseRequest<WishlistRow[]>(
-    `wishlist_items?auth_user_id=${eq(authUserId)}&select=shopify_product_id,product_handle,created_at&order=created_at.desc`,
+    `wishlist_items?auth_user_id=${eq(authUserId)}&product_id=not.is.null&select=product_id,product_handle,created_at&order=created_at.desc`,
   );
   return rows.map((row) => ({
-    shopifyProductId: row.shopify_product_id,
+    productId: row.product_id,
     productHandle: row.product_handle,
     createdAt: row.created_at,
   }));
@@ -87,23 +87,23 @@ export async function listWishlist(authUserId: string) {
 
 export async function saveWishlist(
   authUserId: string,
-  input: { shopifyProductId: string; productHandle: string },
+  input: { productId: string; productHandle: string },
 ) {
   const [row] = await supabaseRequest<WishlistRow[]>(
-    "wishlist_items?on_conflict=auth_user_id,shopify_product_id",
+    "wishlist_items?on_conflict=auth_user_id,product_id",
     {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=representation" },
       body: JSON.stringify({
         auth_user_id: authUserId,
-        shopify_product_id: input.shopifyProductId,
+        product_id: input.productId,
         product_handle: input.productHandle,
       }),
     },
   );
   if (!row) throw new Error("Supabase did not return the saved wishlist item");
   return {
-    shopifyProductId: row.shopify_product_id,
+    productId: row.product_id,
     productHandle: row.product_handle,
     createdAt: row.created_at,
   };
@@ -111,17 +111,17 @@ export async function saveWishlist(
 
 export async function deleteWishlist(authUserId: string, productId: string) {
   await supabaseRequest<void>(
-    `wishlist_items?auth_user_id=${eq(authUserId)}&shopify_product_id=${eq(productId)}`,
+    `wishlist_items?auth_user_id=${eq(authUserId)}&product_id=${eq(productId)}`,
     { method: "DELETE", headers: { Prefer: "return=minimal" } },
   );
 }
 
 export async function listRecentlyViewed(authUserId: string) {
   const rows = await supabaseRequest<ViewedRow[]>(
-    `recently_viewed_items?auth_user_id=${eq(authUserId)}&select=shopify_product_id,product_handle,viewed_at&order=viewed_at.desc`,
+    `recently_viewed_items?auth_user_id=${eq(authUserId)}&product_id=not.is.null&select=product_id,product_handle,viewed_at&order=viewed_at.desc`,
   );
   return rows.map((row) => ({
-    shopifyProductId: row.shopify_product_id,
+    productId: row.product_id,
     productHandle: row.product_handle,
     viewedAt: row.viewed_at,
   }));
@@ -129,16 +129,16 @@ export async function listRecentlyViewed(authUserId: string) {
 
 export async function saveRecentlyViewed(
   authUserId: string,
-  input: { shopifyProductId: string; productHandle: string },
+  input: { productId: string; productHandle: string },
 ) {
   const [row] = await supabaseRequest<ViewedRow[]>(
-    "recently_viewed_items?on_conflict=auth_user_id,shopify_product_id",
+    "recently_viewed_items?on_conflict=auth_user_id,product_id",
     {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=representation" },
       body: JSON.stringify({
         auth_user_id: authUserId,
-        shopify_product_id: input.shopifyProductId,
+        product_id: input.productId,
         product_handle: input.productHandle,
         viewed_at: new Date().toISOString(),
       }),
@@ -146,7 +146,7 @@ export async function saveRecentlyViewed(
   );
   if (!row) throw new Error("Supabase did not return the recently viewed item");
   return {
-    shopifyProductId: row.shopify_product_id,
+    productId: row.product_id,
     productHandle: row.product_handle,
     viewedAt: row.viewed_at,
   };

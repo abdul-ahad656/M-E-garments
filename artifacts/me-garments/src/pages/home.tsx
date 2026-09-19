@@ -13,7 +13,7 @@ export default function Home() {
   const { data: status, isLoading: statusLoading } = useGetStorefrontStatus();
   const { data: homeData, isLoading: homeLoading, error } = useGetStorefrontHome({
     query: {
-      enabled: status?.shopifyConnected === true && status?.catalogReady === true,
+      enabled: status?.catalogReady === true,
       queryKey: ['storefrontHome']
     }
   });
@@ -36,14 +36,14 @@ export default function Home() {
     return <ErrorState error="Failed to load homepage content." />;
   }
 
-  const catalogReady = status?.shopifyConnected && status?.catalogReady;
+  const catalogReady = status?.catalogReady;
 
   return (
     <div className="flex flex-col min-h-screen">
       {!catalogReady && (
         <div className="border-b border-primary/10 bg-accent px-4 py-3 text-center text-sm text-accent-foreground">
           <span className="font-semibold">The M&E experience is taking shape.</span>{" "}
-          Live products, prices, and availability will appear after Shopify is connected.
+          Live products, prices, and availability will appear after the catalog is connected.
         </div>
       )}
 
@@ -96,7 +96,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-center text-center p-4 space-y-2">
             <ShieldCheck className="w-6 h-6 text-primary mb-2" />
-            <h3 className="font-bold text-sm">Shopify Checkout</h3>
+            <h3 className="font-bold text-sm">Secure checkout</h3>
             <p className="text-xs text-muted-foreground">Secure checkout through the connected M&E store.</p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function Home() {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-primary">Live collection preview</p>
             <h2 className="font-serif text-3xl font-bold md:text-4xl">The rails are ready for real M&E products.</h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              New arrivals, best sellers, age ranges, occasions, product cards, sizes, prices, and availability are intentionally hidden until Shopify supplies verified catalog data.
+              New arrivals, best sellers, age ranges, occasions, product cards, sizes, prices, and availability are intentionally hidden until the catalog has active products.
             </p>
           </div>
         </section>
@@ -191,7 +191,7 @@ export default function Home() {
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-white/75">M&E Style Assistant</p>
             <h2 className="font-serif text-3xl font-bold md:text-5xl">Tell us the moment. We’ll help find the look.</h2>
             <p className="mt-5 max-w-2xl text-white/80">
-              Ask naturally by age, occasion, color, category, and budget. Recommendations only use products found in the connected Shopify catalog.
+              Ask naturally by age, occasion, color, category, and budget. Recommendations only use products found in the live catalog.
             </p>
             <Button
               type="button"

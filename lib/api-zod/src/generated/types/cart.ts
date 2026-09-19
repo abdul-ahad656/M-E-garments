@@ -10,7 +10,6 @@ import type { CartLine } from './cartLine';
 
 export interface Cart {
   id: string;
-  checkoutUrl: string;
   /** @minimum 0 */
   totalQuantity: number;
   lines: CartLine[];

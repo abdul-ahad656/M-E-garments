@@ -95,7 +95,7 @@ function AccountDashboard() {
     query: { enabled: !!isSignedIn, queryKey: getListRecentlyViewedItemsQueryKey(), retry: false }
   });
 
-  // Orders query might fail with 404/503 if Shopify Admin isn't fully configured.
+  // Orders may fail if the commerce API is temporarily unavailable.
   const { data: orders, isLoading: isOrdersLoading, error: ordersError } = useListCustomerOrders({
     query: { enabled: !!isSignedIn, queryKey: getListCustomerOrdersQueryKey(), retry: false }
   });
@@ -155,7 +155,7 @@ function AccountDashboard() {
           ) : wishlist && wishlist.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {wishlist.map(item => (
-                <ProductReferenceCard key={item.shopifyProductId} reference={item} source="wishlist" />
+                <ProductReferenceCard key={item.productId} reference={item} source="wishlist" />
               ))}
             </div>
           ) : (
@@ -186,7 +186,7 @@ function AccountDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {recent.map(item => (
                 <ProductReferenceCard
-                  key={`${item.shopifyProductId}-${item.viewedAt}`}
+                  key={`${item.productId}-${item.viewedAt}`}
                   reference={item}
                   source="recently_viewed"
                 />
@@ -212,7 +212,7 @@ function AccountDashboard() {
                 <Package className="w-12 h-12 text-muted-foreground opacity-50" />
                 <div className="space-y-2 max-w-md">
                   <h3 className="font-bold text-lg text-foreground">Order history unavailable</h3>
-                  <p className="text-muted-foreground">Shopify Admin integration is not fully configured for this environment, so we cannot fetch your live orders.</p>
+                  <p className="text-muted-foreground">We couldn't load your orders right now. Please try again later.</p>
                 </div>
               </CardContent>
             </Card>

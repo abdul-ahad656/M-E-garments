@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface StorefrontStatus {
-  aiAvailable: boolean;
-  catalogReady: boolean;
-  message: string;
+export interface AdminMediaUploadInput {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     */
+  files: Blob[];
 }

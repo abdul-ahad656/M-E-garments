@@ -25,11 +25,12 @@ import {
   updateProfile,
 } from "../lib/customer-repository";
 import {
-  getShopifyOrderDetail,
-  getShopifyOrderReferences,
-  ShopifyAdminUnavailableError,
-  ShopifyOrderNotFoundError,
-} from "../lib/shopify";
+  getCustomerOrder,
+  listCustomerOrders,
+} from "../lib/order-repository";
+import {
+  CommerceNotFoundError,
+} from "../lib/commerce-repository";
 import {
   requireAuth,
   type AuthenticatedRequest,
@@ -114,7 +115,7 @@ router.delete(
     }
     await deleteWishlist(
       authUserId(req),
-      params.data.shopifyProductId,
+      params.data.productId,
     );
     res.sendStatus(204);
   },
@@ -139,21 +140,15 @@ router.post("/account/recently-viewed", async (req, res): Promise<void> => {
 });
 
 router.get("/account/orders", async (req, res): Promise<void> => {
-  const primaryEmail = await getVerifiedPrimaryEmail(req, res);
-  if (!primaryEmail) return;
-
   try {
-    const orders = await getShopifyOrderReferences(primaryEmail);
+    const orders = await listCustomerOrders(authUserId(req));
     res.json(ListCustomerOrdersResponse.parse(orders));
   } catch (error) {
-    if (error instanceof ShopifyAdminUnavailableError) {
-      res.status(503).json({
-        error: error.message,
-        code: "SHOPIFY_ADMIN_UNAVAILABLE",
-      });
-      return;
-    }
-    throw error;
+    req.log.error({ err: error }, "Customer orders unavailable");
+    res.status(503).json({
+      error: "Orders are temporarily unavailable",
+      code: "COMMERCE_UNAVAILABLE",
+    });
   }
 });
 
@@ -166,31 +161,23 @@ router.get("/account/orders/:orderId", async (req, res): Promise<void> => {
     });
     return;
   }
-  const primaryEmail = await getVerifiedPrimaryEmail(req, res);
-  if (!primaryEmail) return;
 
   try {
-    const order = await getShopifyOrderDetail(
-      primaryEmail,
-      params.data.orderId,
-    );
+    const order = await getCustomerOrder(authUserId(req), params.data.orderId);
     res.json(GetCustomerOrderResponse.parse(order));
   } catch (error) {
-    if (error instanceof ShopifyOrderNotFoundError) {
+    if (error instanceof CommerceNotFoundError) {
       res.status(404).json({
         error: "Order not found",
         code: "ORDER_NOT_FOUND",
       });
       return;
     }
-    if (error instanceof ShopifyAdminUnavailableError) {
-      res.status(503).json({
-        error: error.message,
-        code: "SHOPIFY_ADMIN_UNAVAILABLE",
-      });
-      return;
-    }
-    throw error;
+    req.log.error({ err: error }, "Customer order detail unavailable");
+    res.status(503).json({
+      error: "Orders are temporarily unavailable",
+      code: "COMMERCE_UNAVAILABLE",
+    });
   }
 });
 

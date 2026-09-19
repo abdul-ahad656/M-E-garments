@@ -5,11 +5,13 @@ import {
   getGetAdminProductQueryKey,
   getListAdminProductsQueryKey,
   useCreateAdminProduct,
+  useDeleteAdminProduct,
   useGetAdminProduct,
   useUpdateAdminProduct,
+  useUploadAdminMedia,
   type AdminProductCreateInputStatus,
 } from "@workspace/api-client-react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,10 +33,11 @@ type VariantDraft = {
   price: string;
   compareAtPrice: string;
   sku: string;
+  quantity: string;
   useCustomSize?: boolean;
 };
 
-/** Storefront category pages match these Shopify product tags. */
+/** Storefront category pages match these product tags. */
 type GenderOption = "" | "boys" | "girls" | "both";
 type AgeOption = "" | "toddler" | "kids" | "both";
 
@@ -130,8 +133,29 @@ function apiErrorMessage(error: unknown): string {
       return String((error as { message: unknown }).message);
     }
   }
-  return "Shopify rejected the request";
+  return "Request rejected";
 }
+
+function mergeImageUrls(existing: string[], nextUrls: string[]): string[] {
+  const merged = [...existing];
+  for (const url of nextUrls) {
+    if (!merged.includes(url)) merged.push(url);
+  }
+  return merged;
+}
+
+function parseQuantity(value: string): number {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+const EMPTY_VARIANT: VariantDraft = {
+  optionValue: "Small",
+  price: "0.00",
+  compareAtPrice: "",
+  sku: "",
+  quantity: "0",
+};
 
 export default function AdminProductEditorPage() {
   const params = useParams<{ id?: string }>();
@@ -150,6 +174,8 @@ export default function AdminProductEditorPage() {
   });
   const createMutation = useCreateAdminProduct();
   const updateMutation = useUpdateAdminProduct();
+  const deleteMutation = useDeleteAdminProduct();
+  const uploadMedia = useUploadAdminMedia();
 
   const [title, setTitle] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState("");
@@ -160,10 +186,22 @@ export default function AdminProductEditorPage() {
   const [partywear, setPartywear] = useState(false);
   const [tags, setTags] = useState("");
   const [optionName, setOptionName] = useState("Size");
-  const [imageUrls, setImageUrls] = useState("");
-  const [variants, setVariants] = useState<VariantDraft[]>([
-    { optionValue: "Small", price: "0.00", compareAtPrice: "", sku: "" },
-  ]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [variants, setVariants] = useState<VariantDraft[]>([{ ...EMPTY_VARIANT }]);
+
+  const resetCreateForm = () => {
+    setTitle("");
+    setDescriptionHtml("");
+    setStatus("DRAFT");
+    setProductType("");
+    setGender("");
+    setAge("");
+    setPartywear(false);
+    setTags("");
+    setOptionName("Size");
+    setImageUrls([]);
+    setVariants([{ ...EMPTY_VARIANT }]);
+  };
 
   useEffect(() => {
     if (!existing.data) return;
@@ -176,7 +214,7 @@ export default function AdminProductEditorPage() {
     setPartywear(isPartywearFromTags(existing.data.tags));
     setTags(existing.data.tags.filter((tag) => !isManagedTag(tag)).join(", "));
     setOptionName(existing.data.options[0]?.name ?? "Size");
-    setImageUrls(existing.data.images.map((image) => image.url).join("\n"));
+    setImageUrls(existing.data.images.map((image) => image.url));
     setVariants(
       existing.data.variants.map((variant) => ({
         id: variant.id,
@@ -184,12 +222,43 @@ export default function AdminProductEditorPage() {
         price: variant.price,
         compareAtPrice: variant.compareAtPrice ?? "",
         sku: variant.sku ?? "",
+        quantity: String(variant.inventoryQuantity ?? 0),
       })),
     );
   }, [existing.data]);
 
-  const saving = createMutation.isPending || updateMutation.isPending;
+  const saving =
+    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  const uploading = uploadMedia.isPending;
   const canSave = Boolean(title.trim()) && Boolean(gender) && Boolean(age);
+
+  const handleImageFiles = (fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    const files = Array.from(fileList);
+    uploadMedia.mutate(
+      { data: { files } },
+      {
+        onSuccess: (result) => {
+          setImageUrls((prev) => mergeImageUrls(prev, result.urls));
+          toast({
+            title: files.length === 1 ? "Image uploaded" : "Images uploaded",
+            description: "Save the product to attach these images.",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Could not upload images",
+            description: apiErrorMessage(error),
+            variant: "destructive",
+          });
+        },
+      },
+    );
+  };
+
+  const removeImageUrl = (urlToRemove: string) => {
+    setImageUrls((prev) => prev.filter((url) => url !== urlToRemove));
+  };
 
   const save = () => {
     if (!gender) {
@@ -218,10 +287,6 @@ export default function AdminProductEditorPage() {
       age,
       partywear,
     );
-    const parsedImages = imageUrls
-      .split("\n")
-      .map((url) => url.trim())
-      .filter(Boolean);
 
     if (isNew) {
       createMutation.mutate(
@@ -233,20 +298,24 @@ export default function AdminProductEditorPage() {
             productType,
             tags: parsedTags,
             optionName,
-            imageUrls: parsedImages,
+            imageUrls,
             variants: variants.map((variant) => ({
               optionValues: [variant.optionValue],
               price: variant.price,
               compareAtPrice: variant.compareAtPrice || null,
               sku: variant.sku || null,
+              inventoryQuantity: parseQuantity(variant.quantity),
             })),
           },
         },
         {
-          onSuccess: async (product) => {
+          onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
-            toast({ title: "Product created" });
-            setLocation(`/admin/products/${encodeURIComponent(product.id)}`);
+            toast({
+              title: "Product created",
+              description: "You can add another product now.",
+            });
+            resetCreateForm();
           },
           onError: (error) => {
             toast({
@@ -269,7 +338,7 @@ export default function AdminProductEditorPage() {
           status,
           productType,
           tags: parsedTags,
-          imageUrls: parsedImages,
+          imageUrls,
           variants: variants
             .filter((variant) => variant.id)
             .map((variant) => ({
@@ -277,6 +346,7 @@ export default function AdminProductEditorPage() {
               price: variant.price,
               compareAtPrice: variant.compareAtPrice || null,
               sku: variant.sku || null,
+              inventoryQuantity: parseQuantity(variant.quantity),
             })),
         },
       },
@@ -288,11 +358,11 @@ export default function AdminProductEditorPage() {
               queryKey: getGetAdminProductQueryKey(productPathId),
             }),
           ]);
-          toast({ title: "Product updated" });
+          toast({ title: "Product saved" });
         },
         onError: (error) => {
           toast({
-            title: "Could not update product",
+            title: "Could not save product",
             description: apiErrorMessage(error),
             variant: "destructive",
           });
@@ -309,7 +379,8 @@ export default function AdminProductEditorPage() {
             {isNew ? "New product" : "Edit product"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Writes go directly to Shopify Admin. Image URLs only (no file upload).
+            Products and images are stored in Supabase. Upload images to R2, then save to
+            attach those URLs on the product.
           </p>
         </div>
 
@@ -317,7 +388,7 @@ export default function AdminProductEditorPage() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Product unavailable</AlertTitle>
-            <AlertDescription>Shopify Admin could not load this product.</AlertDescription>
+            <AlertDescription>This product could not be loaded.</AlertDescription>
           </Alert>
         )}
 
@@ -420,14 +491,53 @@ export default function AdminProductEditorPage() {
                 placeholder="e.g. new, sale, best_seller"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="images">Image URLs (one per line)</Label>
-              <Textarea
-                id="images"
-                className="min-h-24 font-mono"
-                value={imageUrls}
-                onChange={(e) => setImageUrls(e.target.value)}
-              />
+            <div className="space-y-3 md:col-span-2">
+              <div className="space-y-2">
+                <Label htmlFor="image-files">Product images</Label>
+                <Input
+                  id="image-files"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  disabled={uploading || saving}
+                  onChange={(e) => {
+                    handleImageFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Select up to 20 JPEG, PNG, WebP, or GIF files (10MB each). Files upload to
+                  Cloudflare R2 immediately; saving the product stores those URLs in Supabase.
+                </p>
+                {uploading && (
+                  <p className="text-xs text-muted-foreground">Uploading images…</p>
+                )}
+              </div>
+              {imageUrls.length > 0 && (
+                <div className="flex flex-wrap gap-3">
+                  {imageUrls.map((url) => (
+                    <div
+                      key={url}
+                      className="relative h-24 w-24 overflow-hidden rounded-md border bg-secondary"
+                    >
+                      <img
+                        src={url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-foreground shadow"
+                        aria-label="Remove image"
+                        onClick={() => removeImageUrl(url)}
+                        disabled={uploading || saving}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -437,8 +547,8 @@ export default function AdminProductEditorPage() {
             <CardTitle>Variants</CardTitle>
             <CardDescription>
               {isNew
-                ? "Choose size options (Small, Medium, Large, …) and set prices."
-                : "Update prices and SKUs for existing variants."}
+                ? "Choose size options, set prices, and enter stock quantity."
+                : "Update prices, SKUs, and stock quantity for existing variants."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -458,7 +568,7 @@ export default function AdminProductEditorPage() {
               return (
                 <div
                   key={variant.id ?? index}
-                  className="grid gap-3 rounded-lg border p-4 md:grid-cols-4"
+                  className="grid gap-3 rounded-lg border p-4 md:grid-cols-5"
                 >
                   <div className="space-y-2">
                     <Label>Size</Label>
@@ -536,7 +646,11 @@ export default function AdminProductEditorPage() {
                         next[index] = { ...variant, compareAtPrice: e.target.value };
                         setVariants(next);
                       }}
+                      placeholder="Optional original price"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Optional higher price shown crossed out (sale / was price).
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label>SKU</Label>
@@ -545,6 +659,24 @@ export default function AdminProductEditorPage() {
                       onChange={(e) => {
                         const next = [...variants];
                         next[index] = { ...variant, sku: e.target.value };
+                        setVariants(next);
+                      }}
+                      placeholder="Optional stock code"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Optional stock-keeping code for warehouse / inventory tracking.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Quantity</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={variant.quantity}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[index] = { ...variant, quantity: e.target.value };
                         setVariants(next);
                       }}
                     />
@@ -559,7 +691,7 @@ export default function AdminProductEditorPage() {
                 onClick={() =>
                   setVariants([
                     ...variants,
-                    { optionValue: "Medium", price: "0.00", compareAtPrice: "", sku: "" },
+                    { ...EMPTY_VARIANT, optionValue: "Medium" },
                   ])
                 }
               >
@@ -569,13 +701,55 @@ export default function AdminProductEditorPage() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3">
-          <Button onClick={save} disabled={saving || !canSave}>
-            {saving ? "Saving…" : isNew ? "Create product" : "Save changes"}
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={save} disabled={saving || uploading || !canSave}>
+            {saving && !deleteMutation.isPending
+              ? "Saving…"
+              : uploading
+                ? "Uploading…"
+                : isNew
+                  ? "Create product"
+                  : "Save changes"}
           </Button>
           <Button variant="outline" asChild>
             <Link href="/admin/products">Back to list</Link>
           </Button>
+          {!isNew && (
+            <Button
+              variant="destructive"
+              disabled={saving || uploading}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    "Delete this product permanently? Variants and images will be removed. Carts that contain it will drop those lines.",
+                  )
+                ) {
+                  return;
+                }
+                deleteMutation.mutate(
+                  { id: productPathId },
+                  {
+                    onSuccess: async () => {
+                      await queryClient.invalidateQueries({
+                        queryKey: getListAdminProductsQueryKey(),
+                      });
+                      toast({ title: "Product deleted" });
+                      setLocation("/admin/products");
+                    },
+                    onError: (error) => {
+                      toast({
+                        title: "Could not delete product",
+                        description: apiErrorMessage(error),
+                        variant: "destructive",
+                      });
+                    },
+                  },
+                );
+              }}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete product"}
+            </Button>
+          )}
         </div>
       </div>
     </AdminLayout>

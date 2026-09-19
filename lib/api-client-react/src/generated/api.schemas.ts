@@ -210,6 +210,8 @@ export interface AdminProductVariantInput {
      * @pattern ^[0-9]+(\.[0-9]{1,2})?$
      */
   compareAtPrice?: string | null;
+  /** @minimum 0 */
+  inventoryQuantity?: number;
 }
 
 export interface SelectedOption {
@@ -228,6 +230,22 @@ export interface AdminProductVariant {
   inventoryItemId: string;
   inventoryQuantity: number;
   selectedOptions: SelectedOption[];
+}
+
+export interface AdminMediaUploadInput {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     */
+  files: Blob[];
+}
+
+export interface AdminMediaUploadResult {
+  /**
+     * @minItems 1
+     * @maxItems 20
+     */
+  urls: string[];
 }
 
 export type AdminProductCreateInputStatus = typeof AdminProductCreateInputStatus[keyof typeof AdminProductCreateInputStatus];
@@ -284,6 +302,8 @@ export interface AdminProductVariantUpdate {
      * @nullable
      */
   sku?: string | null;
+  /** @minimum 0 */
+  inventoryQuantity?: number;
 }
 
 export type AdminProductUpdateInputStatus = typeof AdminProductUpdateInputStatus[keyof typeof AdminProductUpdateInputStatus];
@@ -550,7 +570,7 @@ export interface ProductReferenceInput {
      * @minLength 1
      * @maxLength 255
      */
-  shopifyProductId: string;
+  productId: string;
   /**
      * @minLength 1
      * @maxLength 255
@@ -559,13 +579,13 @@ export interface ProductReferenceInput {
 }
 
 export interface SavedProductReference {
-  shopifyProductId: string;
+  productId: string;
   productHandle: string;
   createdAt: string;
 }
 
 export interface ViewedProductReference {
-  shopifyProductId: string;
+  productId: string;
   productHandle: string;
   viewedAt: string;
 }
@@ -597,7 +617,6 @@ export type OrderDetail = OrderReference & {
 };
 
 export interface StorefrontStatus {
-  shopifyConnected: boolean;
   aiAvailable: boolean;
   catalogReady: boolean;
   message: string;
@@ -671,11 +690,78 @@ export interface CartCost {
 
 export interface Cart {
   id: string;
-  checkoutUrl: string;
   /** @minimum 0 */
   totalQuantity: number;
   lines: CartLine[];
   cost: CartCost;
+}
+
+export type CheckoutInputShippingAddress = {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  name: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  line1: string;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  line2?: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  city: string;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  region?: string | null;
+  /**
+     * @maxLength 32
+     * @nullable
+     */
+  postalCode?: string | null;
+  /**
+     * @minLength 2
+     * @maxLength 56
+     */
+  country: string;
+  /**
+     * @maxLength 40
+     * @nullable
+     */
+  phone?: string | null;
+};
+
+export interface CheckoutInput {
+  /** @minLength 1 */
+  cartId: string;
+  email: string;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  notes?: string | null;
+  shippingAddress: CheckoutInputShippingAddress;
+}
+
+export interface CheckoutOrder {
+  id: string;
+  name: string;
+  processedAt: string;
+  /** @nullable */
+  displayFinancialStatus: string | null;
+  /** @nullable */
+  displayFulfillmentStatus: string | null;
+  totalPrice: Money;
+  lineItems: OrderLineItem[];
+  fulfillments: OrderFulfillment[];
 }
 
 export interface CartCreateInput {
@@ -792,7 +878,7 @@ export type DeleteWishlistItemParams = {
 /**
  * @minLength 1
  */
-shopifyProductId: string;
+productId: string;
 };
 
 export type ListAdminProductsParams = {

@@ -8,73 +8,61 @@ import {
   SearchProductsResponse,
 } from "@workspace/api-zod";
 import {
-  isShopifyConfigured,
-  getShopifyProduct,
-  mapStorefrontProduct,
-  searchShopifyProducts,
-  shopifyStorefrontQuery,
-  type ShopifyProductNode,
-  STOREFRONT_PRODUCT_FIELDS,
-} from "../lib/shopify";
+  getCatalogHealth,
+  getProductByHandle,
+  isCommerceReady,
+  listActiveProductsForHome,
+  searchProducts,
+  CommerceNotFoundError,
+} from "../lib/commerce-repository";
 import { isAiAvailable } from "../lib/ai-status";
 
 const router: IRouter = Router();
 
-router.get("/storefront/status", (_req, res) => {
-  const connected = isShopifyConfigured();
+router.get("/storefront/status", async (_req, res) => {
+  const ready = await isCommerceReady();
   const data = GetStorefrontStatusResponse.parse({
-    shopifyConnected: connected,
     aiAvailable: isAiAvailable(),
-    catalogReady: connected,
-    message: connected
-      ? "Shopify is connected. Live catalog data is available."
-      : "Connect Shopify to display live products, prices, and availability.",
+    catalogReady: ready,
+    message: ready
+      ? "Catalog is connected. Live product data is available."
+      : "Connect Supabase to display live products, prices, and availability.",
   });
   res.json(data);
 });
 
 router.get("/storefront/home", async (req, res) => {
-  if (!isShopifyConfigured()) {
-    res.status(503).json({
-      error: "Shopify is not connected yet.",
-      code: "SHOPIFY_NOT_CONFIGURED",
-    });
-    return;
-  }
-
   try {
-    const result = await shopifyStorefrontQuery<{
-      collections: {
-        nodes: Array<{
-          title: string;
-          handle: string;
-          products: { nodes: ShopifyProductNode[] };
-        }>;
-      };
-    }>(`
-      query StorefrontHome {
-        collections(first: 6, sortKey: UPDATED_AT, reverse: true) {
-          nodes {
-            title handle
-            products(first: 8) { nodes { ${STOREFRONT_PRODUCT_FIELDS} } }
-          }
-        }
-      }
-    `);
+    const products = await listActiveProductsForHome(24);
+    const boys = products.filter((p) =>
+      p.tags.some((t) => t.toLowerCase() === "boys"),
+    );
+    const girls = products.filter((p) =>
+      p.tags.some((t) => t.toLowerCase() === "girls"),
+    );
+    const party = products.filter((p) =>
+      p.tags.some((t) => ["party", "partywear"].includes(t.toLowerCase())),
+    );
 
-    const data = GetStorefrontHomeResponse.parse({
-      groups: result.collections.nodes.map((collection) => ({
-        title: collection.title,
-        handle: collection.handle,
-        products: collection.products.nodes.map(mapStorefrontProduct),
-      })),
-    });
-    res.json(data);
+    const groups = [
+      { title: "New arrivals", handle: "new", products: products.slice(0, 8) },
+      { title: "Boys", handle: "boys", products: boys.slice(0, 8) },
+      { title: "Girls", handle: "girls", products: girls.slice(0, 8) },
+      { title: "Partywear", handle: "partywear", products: party.slice(0, 8) },
+    ].filter((group) => group.products.length > 0);
+
+    res.json(
+      GetStorefrontHomeResponse.parse({
+        groups: groups.length
+          ? groups
+          : [{ title: "Catalog", handle: "all", products: products.slice(0, 8) }],
+      }),
+    );
   } catch (error) {
-    req.log.error({ err: error }, "Shopify homepage query failed");
+    req.log.error({ err: error }, "Storefront home failed");
     res.status(503).json({
-      error: "The live catalog is temporarily unavailable.",
-      code: "SHOPIFY_UNAVAILABLE",
+      error: "The catalog is temporarily unavailable.",
+      code: "COMMERCE_UNAVAILABLE",
     });
   }
 });
@@ -84,13 +72,13 @@ router.get("/storefront/products/:handle", async (req, res): Promise<void> => {
   if (!params.success) {
     res.status(400).json({
       error: "Invalid product handle.",
-      code: "INVALID_PRODUCT_HANDLE",
+      code: "INVALID_HANDLE",
     });
     return;
   }
 
   try {
-    const product = await getShopifyProduct(params.data.handle);
+    const product = await getProductByHandle(params.data.handle);
     if (!product) {
       res.status(404).json({
         error: "Product not found.",
@@ -100,41 +88,45 @@ router.get("/storefront/products/:handle", async (req, res): Promise<void> => {
     }
     res.json(GetProductResponse.parse(product));
   } catch (error) {
-    req.log.error({ err: error }, "Shopify product query failed");
+    if (error instanceof CommerceNotFoundError) {
+      res.status(404).json({ error: error.message, code: "PRODUCT_NOT_FOUND" });
+      return;
+    }
+    req.log.error({ err: error }, "Product lookup failed");
     res.status(503).json({
-      error: "Product details are temporarily unavailable.",
-      code: "SHOPIFY_UNAVAILABLE",
+      error: "The catalog is temporarily unavailable.",
+      code: "COMMERCE_UNAVAILABLE",
     });
   }
 });
 
-router.get("/storefront/search", async (req, res) => {
+router.get("/storefront/search", async (req, res): Promise<void> => {
   const parsed = SearchProductsQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid search filters.", code: "INVALID_QUERY" });
     return;
   }
-  if (!isShopifyConfigured()) {
-    res.status(503).json({
-      error: "Shopify is not connected yet.",
-      code: "SHOPIFY_NOT_CONFIGURED",
-    });
-    return;
-  }
-
-  const { query, collection, age, occasion, limit = 20 } = parsed.data;
-  const terms = [query, collection, age, occasion].filter(Boolean).join(" ");
 
   try {
-    const products = await searchShopifyProducts(terms, limit);
+    const { query, collection, age, occasion, limit = 20 } = parsed.data;
+    const terms = [query, collection, age, occasion]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .flatMap((value) => value.split(/\s+/))
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const products = await searchProducts(terms, limit);
     res.json(SearchProductsResponse.parse({ products, total: products.length }));
   } catch (error) {
-    req.log.error({ err: error }, "Shopify product search failed");
+    req.log.error({ err: error }, "Product search failed");
     res.status(503).json({
-      error: "Product search is temporarily unavailable.",
-      code: "SHOPIFY_UNAVAILABLE",
+      error: "The catalog is temporarily unavailable.",
+      code: "COMMERCE_UNAVAILABLE",
     });
   }
 });
+
+// Used by admin overview compatibility
+export { getCatalogHealth };
 
 export default router;

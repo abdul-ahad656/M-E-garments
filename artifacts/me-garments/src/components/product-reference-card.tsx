@@ -11,7 +11,7 @@ export function ProductReferenceCard({
   reference,
   source,
 }: {
-  reference: { shopifyProductId: string, productHandle: string };
+  reference: { productId: string, productHandle: string };
   source: ProductReferenceSource;
 }) {
   const { data: product, isLoading, error } = useGetProduct(reference.productHandle, {
@@ -32,7 +32,7 @@ export function ProductReferenceCard({
         </div>
         <div className="absolute top-3 right-3 z-10">
           <FavoriteButton
-            productId={reference.shopifyProductId}
+            productId={reference.productId}
             productHandle={reference.productHandle}
             location={source}
           />

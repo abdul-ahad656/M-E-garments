@@ -6,9 +6,9 @@ import {
   QueryShoppingAssistantResponse,
 } from "@workspace/api-zod";
 import {
-  isShopifyConfigured,
-  searchShopifyProducts,
-} from "../lib/shopify";
+  isCommerceReady,
+  searchProducts,
+} from "../lib/commerce-repository";
 import { isAiAvailable, markAiTemporarilyUnavailable } from "../lib/ai-status";
 
 const router: IRouter = Router();
@@ -80,11 +80,11 @@ router.post("/assistant/query", async (req, res) => {
     return;
   }
 
-  if (!isShopifyConfigured()) {
+  if (!(await isCommerceReady())) {
     res.status(503).json({
       error:
-        "The shopping assistant needs a live Shopify catalog before it can recommend products.",
-      code: "SHOPIFY_NOT_CONFIGURED",
+        "The shopping assistant needs a live catalog before it can recommend products.",
+      code: "CATALOG_NOT_CONFIGURED",
     });
     return;
   }
@@ -117,7 +117,7 @@ router.post("/assistant/query", async (req, res) => {
     });
     const raw = interpretation.choices[0]?.message.content ?? "{}";
     const intent = normalizeIntent(JSON.parse(raw));
-    const shopifyQuery = [
+    const catalogQuery = [
       intent.query,
       intent.gender,
       intent.category,
@@ -126,7 +126,11 @@ router.post("/assistant/query", async (req, res) => {
     ]
       .filter(Boolean)
       .join(" ");
-    const candidates = await searchShopifyProducts(shopifyQuery, 12);
+    const terms = catalogQuery
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const candidates = await searchProducts(terms, 12);
     const products = candidates
       .filter((product) => product.availableForSale)
       .filter(
@@ -140,7 +144,7 @@ router.post("/assistant/query", async (req, res) => {
       products.length > 0
         ? `I found ${products.length} available ${
             products.length === 1 ? "option" : "options"
-          } in the live M&E catalog that match your request. Prices and availability shown below come directly from Shopify.`
+          } in the live M&E catalog that match your request. Prices and availability shown below come directly from the store catalog.`
         : "I couldn't find an available product in the live M&E catalog that matches those details. Try broadening the color, occasion, category, or budget.";
 
     const data = QueryShoppingAssistantResponse.parse({

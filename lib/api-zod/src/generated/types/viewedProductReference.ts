@@ -7,7 +7,7 @@
  */
 
 export interface ViewedProductReference {
-  shopifyProductId: string;
+  productId: string;
   productHandle: string;
   viewedAt: Date;
 }

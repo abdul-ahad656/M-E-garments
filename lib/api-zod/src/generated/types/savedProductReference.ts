@@ -7,7 +7,7 @@
  */
 
 export interface SavedProductReference {
-  shopifyProductId: string;
+  productId: string;
   productHandle: string;
   createdAt: Date;
 }

@@ -54,7 +54,7 @@ export default function AdminOrdersPage() {
         <div>
           <h2 className="font-serif text-2xl font-semibold">Orders</h2>
           <p className="text-sm text-muted-foreground">
-            Staff order list from Shopify Admin. Fulfill, refund, or cancel from the detail page.
+            Staff order list. Fulfill, mark paid, refund, or cancel from the detail page.
           </p>
         </div>
 
@@ -113,14 +113,14 @@ export default function AdminOrdersPage() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Orders unavailable</AlertTitle>
-            <AlertDescription>Shopify Admin could not return orders.</AlertDescription>
+            <AlertDescription>Orders could not be loaded.</AlertDescription>
           </Alert>
         )}
 
         <Card>
           <CardHeader>
             <CardTitle>Recent orders</CardTitle>
-            <CardDescription>Live Shopify Admin data</CardDescription>
+            <CardDescription>Orders from Supabase commerce</CardDescription>
           </CardHeader>
           <CardContent className="divide-y">
             {orders.isPending && (
