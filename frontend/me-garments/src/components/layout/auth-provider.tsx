@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useSignUp } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -88,15 +88,45 @@ function sanitizeRedirectUrl(url: string | null): string {
   return `${basePath}/account`;
 }
 
+function AuthFormShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background px-4 py-8">
+      {children}
+    </div>
+  );
+}
+
+export function LoginPage() {
+  const search = useSearch();
+  const searchParams = new URLSearchParams(search);
+  const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
+
+  return (
+    <AuthFormShell>
+      <SignIn
+        routing="path"
+        path={`${basePath}/login`}
+        signUpUrl={`${basePath}/sign-up`}
+        fallbackRedirectUrl={redirectUrl}
+      />
+    </AuthFormShell>
+  );
+}
+
 export function SignInPage() {
   const search = useSearch();
   const searchParams = new URLSearchParams(search);
   const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
 
   return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background px-4 py-8">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={redirectUrl} />
-    </div>
+    <AuthFormShell>
+      <SignIn
+        routing="path"
+        path={`${basePath}/sign-in`}
+        signUpUrl={`${basePath}/sign-up`}
+        fallbackRedirectUrl={redirectUrl}
+      />
+    </AuthFormShell>
   );
 }
 
@@ -106,10 +136,10 @@ export function SignUpPage() {
   const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
 
   return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background px-4 py-8">
+    <AuthFormShell>
       <SignUpSuccessTracker />
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} fallbackRedirectUrl={redirectUrl} />
-    </div>
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/login`} fallbackRedirectUrl={redirectUrl} />
+    </AuthFormShell>
   );
 }
 
@@ -167,7 +197,7 @@ function ClerkApiAuthBridge() {
   return null;
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
 
   return (
@@ -175,19 +205,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
-      signInUrl={`${basePath}/sign-in`}
+      signInUrl={`${basePath}/login`}
       signUpUrl={`${basePath}/sign-up`}
       localization={{
         signIn: {
           start: {
-            title: "Welcome to M&E",
-            subtitle: "Sign in to save favorites and track orders",
+            title: "Login",
+            subtitle: "Welcome back. Log in to save favorites and track orders",
           },
         },
         signUp: {
           start: {
-            title: "Create your account",
-            subtitle: "Join M&E Garments today",
+            title: "Sign in",
+            subtitle: "Create your M&E Garments account",
           },
         },
       }}

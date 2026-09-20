@@ -38,7 +38,7 @@ const queryClient = new QueryClient({
   },
 });
 
-import { AuthProvider, SignInPage, SignUpPage } from '@/components/layout/auth-provider';
+import { AuthProvider, LoginPage, SignInPage, SignUpPage } from '@/components/layout/auth-provider';
 
 function Router() {
   return (
@@ -47,6 +47,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
 
+          <Route path="/login/*?" component={LoginPage} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
 

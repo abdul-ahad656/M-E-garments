@@ -154,4 +154,110 @@
   input[type='search']::-webkit-search-cancel-button {
     @apply hidden;
   }
+
+  .home-dash-line {
+    stroke-dasharray: 5 11;
+    animation: home-dash-flow 8s linear infinite;
+  }
+
+  .home-dash-line-slow {
+    stroke-dasharray: 3 13;
+    animation: home-dash-flow 12s linear infinite reverse;
+  }
+
+  .home-float {
+    animation: home-float 4.8s ease-in-out infinite;
+  }
+
+  .home-float-delayed {
+    animation: home-float 6s ease-in-out 0.7s infinite;
+  }
+
+  .home-float-slow {
+    animation: home-float 7.2s ease-in-out 0.4s infinite;
+  }
+
+  .home-drift {
+    animation: home-drift 6.5s ease-in-out infinite;
+  }
+
+  .home-drift-delayed {
+    animation: home-drift 8s ease-in-out 1.2s infinite reverse;
+  }
+
+  .home-twinkle {
+    animation: home-twinkle 2.8s ease-in-out infinite;
+  }
+
+  .home-twinkle-delayed {
+    animation: home-twinkle 3.6s ease-in-out 0.8s infinite;
+  }
+
+  .home-spin-slow {
+    animation: home-spin-slow 18s linear infinite;
+  }
+
+  .home-shop-btn {
+    animation: home-shop-idle 4.2s ease-in-out infinite;
+  }
+
+  .home-shop-btn:hover,
+  .home-shop-btn:focus-visible {
+    animation: none;
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  @keyframes home-dash-flow {
+    to {
+      stroke-dashoffset: -160;
+    }
+  }
+
+  @keyframes home-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-28px);
+    }
+  }
+
+  @keyframes home-drift {
+    0%,
+    100% {
+      transform: translate(0, 0) rotate(-10deg);
+    }
+    50% {
+      transform: translate(22px, -26px) rotate(12deg);
+    }
+  }
+
+  @keyframes home-twinkle {
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: translateY(0) scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-14px) scale(1.15);
+    }
+  }
+
+  @keyframes home-spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes home-shop-idle {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
 }

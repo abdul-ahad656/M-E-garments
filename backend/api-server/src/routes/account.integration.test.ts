@@ -163,6 +163,29 @@ describe("authenticated account API", () => {
     expect(orders.getCustomerOrder).toHaveBeenCalledWith("user_server_123", "99");
   });
 
+  it("completes login separately from sign-in using the authenticated Clerk user", async () => {
+    const profile = {
+      displayName: "Amina Khan",
+      preferredCurrency: "PKR",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    repository.getOrCreateProfile.mockResolvedValue(profile);
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Server did not bind");
+    const origin = `http://127.0.0.1:${address.port}`;
+
+    const login = await fetch(`${origin}/api/account/login`, { method: "POST" });
+    const signIn = await fetch(`${origin}/api/account/sign-in`, { method: "POST" });
+
+    expect(login.status).toBe(200);
+    expect(signIn.status).toBe(200);
+    expect(await login.json()).toMatchObject(profile);
+    expect(await signIn.json()).toMatchObject(profile);
+    expect(repository.getOrCreateProfile).toHaveBeenCalledWith("user_server_123");
+    expect(repository.getOrCreateProfile).toHaveBeenCalledTimes(2);
+  });
+
   it("returns an explicit unavailable response without fake orders", async () => {
     orders.listCustomerOrders.mockRejectedValue(new Error("database unavailable"));
     await expect(listCustomerOrders()).rejects.toMatchObject({

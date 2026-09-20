@@ -14,6 +14,15 @@ export function Footer() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Premium kidswear designed for discovery. Where children find style and parents shop with confidence.
             </p>
+            <div className="space-y-1 text-sm text-muted-foreground leading-relaxed">
+              <p>M&E 2nd Floor Al karim Mall Karim Block Market Allama Iqbal Town Lahore.</p>
+              <p>
+                Contact #{" "}
+                <a href="tel:03014453922" className="hover:text-primary transition-colors">
+                  03014453922
+                </a>
+              </p>
+            </div>
           </div>
 
           <div>
@@ -57,7 +66,14 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} M&E Garments. All rights reserved.</p>
+          <p className="flex items-center gap-2">
+            <img
+              src="/indigo-logo.png"
+              alt="Indigo Tech Solutions"
+              className="h-7 w-7 object-contain mix-blend-multiply"
+            />
+            <span>Powered by Indigo Tech Solutions</span>
+          </p>
           <div className="flex gap-4">
             <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>

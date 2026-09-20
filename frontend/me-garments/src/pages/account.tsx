@@ -65,16 +65,16 @@ function SignInPrompt() {
       </div>
       <div className="flex flex-col w-full gap-4 sm:flex-row justify-center">
         <Link
-          href="/sign-in"
+          href="/login"
           className="w-full sm:w-auto inline-flex items-center justify-center whitespace-nowrap text-base h-14 rounded-xl px-8 font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors"
         >
-          Sign In
+          Login
         </Link>
         <Link
           href="/sign-up"
           className="w-full sm:w-auto inline-flex items-center justify-center whitespace-nowrap text-base h-14 rounded-xl px-8 font-bold border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
         >
-          Create Account
+          Sign in
         </Link>
       </div>
     </div>

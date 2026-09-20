@@ -72,6 +72,16 @@ router.get("/account/profile", async (req, res): Promise<void> => {
   res.json(GetCustomerProfileResponse.parse(profile));
 });
 
+router.post("/account/login", async (req, res): Promise<void> => {
+  const profile = await getOrCreateProfile(authUserId(req));
+  res.json(GetCustomerProfileResponse.parse(profile));
+});
+
+router.post("/account/sign-in", async (req, res): Promise<void> => {
+  const profile = await getOrCreateProfile(authUserId(req));
+  res.json(GetCustomerProfileResponse.parse(profile));
+});
+
 router.put("/account/profile", async (req, res): Promise<void> => {
   const input = UpdateCustomerProfileBody.safeParse(req.body);
   if (!input.success) {
