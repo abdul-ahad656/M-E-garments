@@ -20,6 +20,7 @@ export function Footer() {
             <h4 className="font-bold mb-4">Shop</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/new-arrivals" className="hover:text-primary transition-colors">New Arrivals</Link></li>
+              <li><Link href="/best-sellers" className="hover:text-primary transition-colors">Best Sellers</Link></li>
               <li><Link href="/boys" className="hover:text-primary transition-colors">Boys</Link></li>
               <li><Link href="/girls" className="hover:text-primary transition-colors">Girls</Link></li>
               <li><Link href="/sale" className="hover:text-primary transition-colors">Sale</Link></li>

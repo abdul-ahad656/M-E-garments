@@ -1235,10 +1235,13 @@ components:
         title: { type: string }
         status: { type: string, enum: [ACTIVE, ARCHIVED, DRAFT] }
         productType: { type: string }
+        tags:
+          type: array
+          items: { type: string }
         totalInventory: { type: integer }
         featuredImageUrl: { type: ["string", "null"], format: uri }
         updatedAt: { type: string, format: date-time }
-      required: [id, handle, title, status, productType, totalInventory, featuredImageUrl, updatedAt]
+      required: [id, handle, title, status, productType, tags, totalInventory, featuredImageUrl, updatedAt]
     AdminProductList:
       type: object
       properties:

@@ -43,7 +43,11 @@ export async function requireStaff(
   next: NextFunction,
 ): Promise<void> {
   const auth = getAuth(req);
-  const userId = auth.userId;
+  const claimUserId =
+    typeof auth.sessionClaims?.userId === "string"
+      ? auth.sessionClaims.userId
+      : undefined;
+  const userId = claimUserId ?? auth.userId;
   if (!userId) {
     res.status(401).json({ error: "Authentication required", code: "UNAUTHORIZED" });
     return;

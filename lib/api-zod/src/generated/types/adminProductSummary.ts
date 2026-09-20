@@ -13,6 +13,7 @@ export interface AdminProductSummary {
   title: string;
   status: AdminProductSummaryStatus;
   productType: string;
+  tags: string[];
   totalInventory: number;
   /** @nullable */
   featuredImageUrl: string | null;

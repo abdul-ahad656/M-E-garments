@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, useClerk, useSignUp } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useSignUp } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { useLocation, useSearch } from 'wouter';
 import { useQueryClient } from "@tanstack/react-query";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { trackEvent } from "@/lib/analytics";
 
 const clerkEnvKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
@@ -148,6 +149,24 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+/** Attach Clerk session JWT to API calls so mutating requests stay authenticated. */
+function ClerkApiAuthBridge() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setAuthTokenGetter(async () => {
+      try {
+        return (await getToken()) ?? null;
+      } catch {
+        return null;
+      }
+    });
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
+
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
 
@@ -176,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <ClerkQueryClientCacheInvalidator />
+      <ClerkApiAuthBridge />
       {children}
     </ClerkProvider>
   );

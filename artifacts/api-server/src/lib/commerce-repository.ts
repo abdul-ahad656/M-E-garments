@@ -71,6 +71,7 @@ export type AdminProductSummary = {
   title: string;
   status: "ACTIVE" | "ARCHIVED" | "DRAFT";
   productType: string;
+  tags: string[];
   totalInventory: number;
   featuredImageUrl: string | null;
   updatedAt: string;
@@ -490,6 +491,7 @@ export async function listAdminProducts(options: {
       title: product.title,
       status: toAdminStatus(product.status),
       productType: product.product_type,
+      tags: product.tags ?? [],
       totalInventory: productVariants.reduce(
         (sum, v) => sum + v.inventory_quantity,
         0,

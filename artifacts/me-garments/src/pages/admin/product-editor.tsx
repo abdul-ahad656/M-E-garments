@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLayout } from "./layout";
@@ -46,6 +47,7 @@ type AgeOption = "" | "toddler" | "kids" | "both";
 const GENDER_TAGS = new Set(["boys", "girls"]);
 const AGE_TAGS = new Set(["toddler", "kids"]);
 const OCCASION_TAGS = new Set(["party", "partywear"]);
+const MERCH_TAGS = new Set(["best_seller", "sale"]);
 
 const SIZE_PRESETS = [
   "XS",
@@ -68,8 +70,61 @@ function isManagedTag(tag: string): boolean {
   return (
     GENDER_TAGS.has(normalized) ||
     AGE_TAGS.has(normalized) ||
-    OCCASION_TAGS.has(normalized)
+    OCCASION_TAGS.has(normalized) ||
+    MERCH_TAGS.has(normalized)
   );
+}
+
+function parseMoney(value: string): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function formatMoney(value: number): string {
+  return value.toFixed(2);
+}
+
+/** Prefer compare-at when already on sale; otherwise the current selling price. */
+function originalPriceOf(variant: VariantDraft): number {
+  const compare = parseMoney(variant.compareAtPrice);
+  const price = parseMoney(variant.price);
+  if (compare > price && compare > 0) return compare;
+  return price;
+}
+
+function applySalePercentToVariants(
+  drafts: VariantDraft[],
+  percent: number,
+): VariantDraft[] {
+  const clamped = Math.min(100, Math.max(0, percent));
+  return drafts.map((variant) => {
+    const original = originalPriceOf(variant);
+    const discounted = original * (1 - clamped / 100);
+    return {
+      ...variant,
+      compareAtPrice: formatMoney(original),
+      price: formatMoney(discounted),
+    };
+  });
+}
+
+function clearSaleFromVariants(drafts: VariantDraft[]): VariantDraft[] {
+  return drafts.map((variant) => ({
+    ...variant,
+    price: formatMoney(originalPriceOf(variant)),
+    compareAtPrice: "",
+  }));
+}
+
+function deriveSalePercent(drafts: VariantDraft[]): string {
+  for (const variant of drafts) {
+    const compare = parseMoney(variant.compareAtPrice);
+    const price = parseMoney(variant.price);
+    if (compare > price && compare > 0) {
+      return String(Math.round((1 - price / compare) * 100));
+    }
+  }
+  return "";
 }
 
 function genderFromTags(tags: string[]): GenderOption {
@@ -96,11 +151,17 @@ function isPartywearFromTags(tags: string[]): boolean {
   return tags.some((tag) => OCCASION_TAGS.has(normalizeTag(tag)));
 }
 
+function hasMerchTag(tags: string[], merchTag: "best_seller" | "sale"): boolean {
+  return tags.some((tag) => normalizeTag(tag) === merchTag);
+}
+
 function applyCategoryTags(
   freeformTags: string[],
   gender: GenderOption,
   age: AgeOption,
   partywear: boolean,
+  bestSeller: boolean,
+  onSale: boolean,
 ): string[] {
   const tags = freeformTags.filter((tag) => !isManagedTag(tag));
 
@@ -113,6 +174,8 @@ function applyCategoryTags(
   if (age === "both") tags.push("toddler", "kids");
 
   if (partywear) tags.push("party");
+  if (bestSeller) tags.push("best_seller");
+  if (onSale) tags.push("sale");
 
   return tags;
 }
@@ -201,6 +264,9 @@ export default function AdminProductEditorPage() {
   const [gender, setGender] = useState<GenderOption>("");
   const [age, setAge] = useState<AgeOption>("");
   const [partywear, setPartywear] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
+  const [onSale, setOnSale] = useState(false);
+  const [salePercent, setSalePercent] = useState("");
   const [tags, setTags] = useState("");
   const [optionName, setOptionName] = useState("Size");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -216,6 +282,9 @@ export default function AdminProductEditorPage() {
     setGender("");
     setAge("");
     setPartywear(false);
+    setBestSeller(false);
+    setOnSale(false);
+    setSalePercent("");
     setTags("");
     setOptionName("Size");
     setImageUrls([]);
@@ -233,19 +302,23 @@ export default function AdminProductEditorPage() {
     setGender(genderFromTags(existing.data.tags));
     setAge(ageFromTags(existing.data.tags));
     setPartywear(isPartywearFromTags(existing.data.tags));
+    setBestSeller(hasMerchTag(existing.data.tags, "best_seller"));
+    const mappedVariants = existing.data.variants.map((variant) => ({
+      id: variant.id,
+      optionValue: variant.selectedOptions[0]?.value ?? variant.title,
+      price: variant.price,
+      compareAtPrice: variant.compareAtPrice ?? "",
+      sku: variant.sku ?? "",
+      quantity: String(variant.inventoryQuantity ?? 0),
+    }));
+    const derivedPercent = deriveSalePercent(mappedVariants);
+    const saleTagged = hasMerchTag(existing.data.tags, "sale");
+    setOnSale(saleTagged || Boolean(derivedPercent));
+    setSalePercent(derivedPercent);
     setTags(existing.data.tags.filter((tag) => !isManagedTag(tag)).join(", "));
     setOptionName(existing.data.options[0]?.name ?? "Size");
     setImageUrls(existing.data.images.map((image) => image.url));
-    setVariants(
-      existing.data.variants.map((variant) => ({
-        id: variant.id,
-        optionValue: variant.selectedOptions[0]?.value ?? variant.title,
-        price: variant.price,
-        compareAtPrice: variant.compareAtPrice ?? "",
-        sku: variant.sku ?? "",
-        quantity: String(variant.inventoryQuantity ?? 0),
-      })),
-    );
+    setVariants(mappedVariants);
   }, [existing.data]);
 
   const saving =
@@ -355,7 +428,25 @@ export default function AdminProductEditorPage() {
       gender,
       age,
       partywear,
+      bestSeller,
+      onSale,
     );
+
+    if (onSale) {
+      const percent = Number.parseFloat(salePercent);
+      if (!Number.isFinite(percent) || percent <= 0 || percent > 100) {
+        toast({
+          title: "Sale percentage required",
+          description: "Enter a sale percentage between 1 and 100.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const saleAppliedVariants = onSale
+      ? applySalePercentToVariants(variants, Number.parseFloat(salePercent))
+      : variants;
 
     if (isNew) {
       createMutation.mutate(
@@ -368,7 +459,7 @@ export default function AdminProductEditorPage() {
             tags: parsedTags,
             optionName,
             imageUrls,
-            variants: variants.map((variant) => ({
+            variants: saleAppliedVariants.map((variant) => ({
               optionValues: [variant.optionValue],
               price: variant.price,
               compareAtPrice: variant.compareAtPrice || null,
@@ -408,7 +499,7 @@ export default function AdminProductEditorPage() {
           productType,
           tags: parsedTags,
           imageUrls,
-          variants: variants
+          variants: saleAppliedVariants
             .filter((variant) => variant.id)
             .map((variant) => ({
               id: variant.id!,
@@ -551,13 +642,85 @@ export default function AdminProductEditorPage() {
                 Shows under Partywear. Boy/Girl and age tags power the storefront category pages.
               </p>
             </div>
+            <div className="space-y-4 rounded-lg border p-4 md:col-span-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="best-seller">Best Seller</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Shows on the Best Sellers page and as a product badge.
+                  </p>
+                </div>
+                <Switch
+                  id="best-seller"
+                  checked={bestSeller}
+                  onCheckedChange={setBestSeller}
+                />
+              </div>
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="on-sale">Sale</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Apply a percentage off the product price. Shoppers see the original and sale
+                      prices.
+                    </p>
+                  </div>
+                  <Switch
+                    id="on-sale"
+                    checked={onSale}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setOnSale(true);
+                        if (!salePercent) setSalePercent("10");
+                        const percent = Number.parseFloat(salePercent || "10");
+                        if (Number.isFinite(percent) && percent > 0) {
+                          setVariants((prev) => applySalePercentToVariants(prev, percent));
+                        }
+                      } else {
+                        setOnSale(false);
+                        setSalePercent("");
+                        setVariants((prev) => clearSaleFromVariants(prev));
+                      }
+                    }}
+                  />
+                </div>
+                {onSale && (
+                  <div className="grid gap-3 sm:grid-cols-[10rem_1fr] sm:items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="sale-percent">Discount %</Label>
+                      <Input
+                        id="sale-percent"
+                        type="number"
+                        min={1}
+                        max={100}
+                        step={1}
+                        value={salePercent}
+                        onChange={(e) => {
+                          const nextPercent = e.target.value;
+                          setSalePercent(nextPercent);
+                          const percent = Number.parseFloat(nextPercent);
+                          if (Number.isFinite(percent) && percent > 0 && percent <= 100) {
+                            setVariants((prev) => applySalePercentToVariants(prev, percent));
+                          }
+                        }}
+                        placeholder="e.g. 20"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground pb-2">
+                      Enter how much percent off. Variant prices update automatically — original
+                      price is crossed out on the storefront, sale price is shown as the new price.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="tags">Other tags (comma separated)</Label>
               <Input
                 id="tags"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                placeholder="e.g. new, sale, best_seller"
+                placeholder="e.g. new, limited"
               />
             </div>
             <div className="space-y-3 md:col-span-2">
@@ -768,29 +931,50 @@ export default function AdminProductEditorPage() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Price</Label>
+                    <Label>{onSale ? "Original price" : "Price"}</Label>
                     <Input
-                      value={variant.price}
+                      value={onSale ? variant.compareAtPrice || variant.price : variant.price}
                       onChange={(e) => {
                         const next = [...variants];
-                        next[index] = { ...variant, price: e.target.value };
+                        if (onSale) {
+                          const original = parseMoney(e.target.value);
+                          const percent = Number.parseFloat(salePercent);
+                          const clamped =
+                            Number.isFinite(percent) && percent > 0 && percent <= 100
+                              ? percent
+                              : 0;
+                          next[index] = {
+                            ...variant,
+                            compareAtPrice: formatMoney(original),
+                            price: formatMoney(original * (1 - clamped / 100)),
+                          };
+                        } else {
+                          next[index] = { ...variant, price: e.target.value };
+                        }
                         setVariants(next);
                       }}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Compare at</Label>
+                    <Label>{onSale ? "Sale price" : "Compare at"}</Label>
                     <Input
-                      value={variant.compareAtPrice}
+                      value={onSale ? variant.price : variant.compareAtPrice}
                       onChange={(e) => {
+                        if (onSale) return;
                         const next = [...variants];
                         next[index] = { ...variant, compareAtPrice: e.target.value };
                         setVariants(next);
                       }}
-                      placeholder="Optional original price"
+                      readOnly={onSale}
+                      disabled={onSale}
+                      placeholder={onSale ? undefined : "Optional original price"}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Optional higher price shown crossed out (sale / was price).
+                      {onSale
+                        ? salePercent
+                          ? `${salePercent}% off — storefront shows original crossed out and this sale price.`
+                          : "Enter a discount % above to calculate the sale price."
+                        : "Optional higher price shown crossed out (sale / was price)."}
                     </p>
                   </div>
                   <div className="space-y-2">

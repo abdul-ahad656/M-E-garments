@@ -49,6 +49,7 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-1 justify-center space-x-8">
           <NavLink href="/new-arrivals" current={location}>New</NavLink>
+          <NavLink href="/best-sellers" current={location}>Best Sellers</NavLink>
           <NavLink href="/boys" current={location}>Boys</NavLink>
           <NavLink href="/girls" current={location}>Girls</NavLink>
           <NavLink href="/sale" current={location} className="text-primary font-medium">Sale</NavLink>

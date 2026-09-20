@@ -4,8 +4,6 @@ import { ErrorState } from "@/components/readiness-state";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowRight, Sparkles, ShieldCheck, HeartHandshake, Store, WandSparkles } from "lucide-react";
-import { BoyCharacter } from "@/components/illustrations/boy";
-import { GirlCharacter } from "@/components/illustrations/girl";
 import { useAssistantWidget } from "@/components/assistant-widget";
 
 export default function Home() {
@@ -68,11 +66,19 @@ export default function Home() {
           </div>
 
           <div className="flex-1 flex justify-center items-center gap-4 md:gap-8 w-full max-w-md md:max-w-none">
-            <div className="w-1/2 max-w-[240px] animate-in slide-in-from-bottom-8 duration-700">
-              <BoyCharacter className="w-full drop-shadow-xl" />
+            <div className="w-1/2 max-w-[240px] aspect-square rounded-full bg-white/55 shadow-lg ring-1 ring-primary/10 overflow-hidden flex items-start justify-center pt-3 animate-in slide-in-from-bottom-8 duration-700">
+              <img
+                src="/avatars/boy-mascot.png"
+                alt="M&E boy mascot"
+                className="h-[90%] w-auto max-w-[78%] object-contain object-top select-none pointer-events-none"
+              />
             </div>
-            <div className="w-1/2 max-w-[240px] animate-in slide-in-from-bottom-12 duration-1000 delay-150">
-              <GirlCharacter className="w-full drop-shadow-xl" />
+            <div className="w-1/2 max-w-[240px] aspect-square rounded-full bg-white/55 shadow-lg ring-1 ring-primary/10 overflow-hidden flex items-start justify-center pt-3 animate-in slide-in-from-bottom-12 duration-1000 delay-150">
+              <img
+                src="/avatars/girl-mascot.png"
+                alt="M&E girl mascot"
+                className="h-[90%] w-auto max-w-[78%] object-contain object-top select-none pointer-events-none"
+              />
             </div>
           </div>
         </div>
@@ -162,7 +168,12 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8">
             <Link href="/boys" className="group relative h-[300px] rounded-2xl overflow-hidden bg-accent flex items-center justify-center p-8">
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-              <BoyCharacter className="absolute -bottom-10 right-0 w-64 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+              <img
+                src="/avatars/boy-mascot.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute bottom-0 right-8 md:right-12 h-[88%] w-auto max-w-[45%] object-contain object-bottom opacity-50 group-hover:opacity-100 transition-opacity duration-500 select-none pointer-events-none drop-shadow-xl"
+              />
               <div className="relative z-20 w-full flex flex-col items-start mt-auto">
                 <h3 className="text-3xl font-serif font-bold text-white mb-2">Boys Collection</h3>
                 <span className="text-white flex items-center group-hover:text-primary transition-colors">
@@ -173,7 +184,12 @@ export default function Home() {
 
             <Link href="/girls" className="group relative h-[300px] rounded-2xl overflow-hidden bg-accent flex items-center justify-center p-8">
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-              <GirlCharacter className="absolute -bottom-10 right-0 w-64 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+              <img
+                src="/avatars/girl-mascot.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute bottom-0 right-8 md:right-12 h-[88%] w-auto max-w-[45%] object-contain object-bottom opacity-50 group-hover:opacity-100 transition-opacity duration-500 select-none pointer-events-none drop-shadow-xl"
+              />
               <div className="relative z-20 w-full flex flex-col items-start mt-auto">
                 <h3 className="text-3xl font-serif font-bold text-white mb-2">Girls Collection</h3>
                 <span className="text-white flex items-center group-hover:text-primary transition-colors">

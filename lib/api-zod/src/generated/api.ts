@@ -994,6 +994,7 @@ export const ListAdminProductsResponse = zod.object({
   "title": zod.string(),
   "status": zod.enum(['ACTIVE', 'ARCHIVED', 'DRAFT']),
   "productType": zod.string(),
+  "tags": zod.array(zod.string()),
   "totalInventory": zod.number().int(),
   "featuredImageUrl": zod.string().url().nullable(),
   "updatedAt": zod.coerce.date()

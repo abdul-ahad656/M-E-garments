@@ -57,7 +57,10 @@ function Router() {
             <Category category="girls" title="Girls Collection" />
           </Route>
           <Route path="/new-arrivals">
-            <Category category="new-arrivals" title="New Arrivals" />
+            <Category category="new" title="New Arrivals" />
+          </Route>
+          <Route path="/best-sellers">
+            <Category category="best_seller" title="Best Sellers" />
           </Route>
           <Route path="/sale">
             <Category category="sale" title="Sale" />
