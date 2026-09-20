@@ -11,10 +11,10 @@
   "exclude": ["src/**/*.test.ts"],
   "references": [
     {
-      "path": "../../lib/db"
+      "path": "../db"
     },
     {
-      "path": "../../lib/api-zod"
+      "path": "../api-zod"
     }
   ]
 }

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M&E | Premium Motion Theme - Kidswear Interactive</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+:root {
+  --primary-red: #D90429;
+  --dark-red: #8D0801;
+  --pure-white: #FFFFFF;
+  --off-white: #F8F9FA;
+  --text-dark: #2B2D42;
+  --line: #ECECEC;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Arial, sans-serif; }
+html { scroll-behavior: smooth; }
+body { background-color: var(--off-white); color: var(--text-dark); overflow-x: hidden; }
+img { max-width: 100%; }
+
+/* Cinematic Curtain */
+.curtain {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: var(--primary-red); z-index: 9999;
+  display: flex; justify-content: center; align-items: center;
+  color: var(--pure-white); font-size: 4rem; font-weight: bold; letter-spacing: 5px;
+  transform: translateY(0); pointer-events: none;
+}
+
+/* Navigation */
+nav {
+  position: fixed; top: 0; width: 100%; padding: 2rem 5%;
+  display: flex; justify-content: space-between; align-items: center;
+  z-index: 100; mix-blend-mode: difference; color: white;
+  transition: padding 0.4s cubic-bezier(.2,.8,.2,1);
+}
+nav.is-scrolled { padding: 1.1rem 5%; }
+.logo a {
+  color: white; text-decoration: none; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+  display: inline-block; transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+.logo a:hover { transform: scale(1.08) rotate(-2deg); }
+.nav-links { display: flex; align-items: center; }
+.nav-links a {
+  color: white; text-decoration: none; margin-left: 2rem;
+  font-weight: 500; text-transform: uppercase; font-size: 0.9rem; position: relative; cursor: pointer;
+  display: inline-block; transition: transform 0.3s ease;
+}
+.nav-links a::after {
+  content: ''; position: absolute; width: 0; height: 2px;
+  bottom: -5px; left: 0; background-color: white; transition: width 0.3s ease;
+}
+.nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+.nav-links a:hover { transform: translateY(-2px); }
+.cart-count { display: inline-block; transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); }
+.cart-count.bump { animation: cartBump 0.5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes cartBump { 0%{transform:scale(1);} 40%{transform:scale(1.6);} 100%{transform:scale(1);} }
+
+/* Views (tabs) */
+.view { display: none; }
+.view.active { display: block; }
+
+/* Sections */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center; position: relative; overflow: hidden;
+  background: linear-gradient(to bottom, var(--off-white), var(--pure-white)); padding: 8rem 5% 4rem;
+}
+.hero h1 { font-size: clamp(4rem, 8vw, 8rem); color: var(--primary-red); line-height: 1; margin-bottom: 1rem; }
+.hero p { font-size: 1.2rem; max-width: 600px; margin-bottom: 2rem; color: #555; }
+.hero-text { opacity: 0; transform: translateY(50px); }
+
+/* Animated gradient stage behind the mascot - echoes the colourful motion reel */
+.hero-stage {
+  position: relative; width: min(92%, 760px); border-radius: 32px; overflow: hidden;
+  margin-top: 1rem; padding: 3.5rem 2rem 2.5rem; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; min-height: 420px;
+  background: linear-gradient(120deg, #FFD1DC, #FDFD96, #AEC6CF, #C9A7EB, #FFD1DC);
+  background-size: 300% 300%; animation: heroGradientShift 14s ease infinite;
+  box-shadow: 0 40px 80px rgba(43,45,66,0.18);
+}
+@keyframes heroGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.hero-stage-caption {
+  position: absolute; top: 1.8rem; left: 50%; transform: translateX(-50%);
+  background: var(--pure-white); color: var(--text-dark); padding: 0.6rem 1.4rem;
+  border-radius: 100px; font-size: 0.85rem; font-weight: 600; font-style: italic;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12); opacity: 0; animation: captionPop 0.6s 1.4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes captionPop { from { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.85); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+
+/* Mascot avatar - built entirely in SVG, no external assets */
+.mascot-wrap { position: relative; width: min(80%, 320px); animation: mascotFloat 4.5s ease-in-out infinite; }
+@keyframes mascotFloat { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-16px) rotate(1deg); } }
+.mascot-wrap svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 24px 26px rgba(0,0,0,0.18)); }
+.mascot-arm-left { transform-origin: 128px 150px; animation: mascotWave 2.6s ease-in-out infinite; }
+@keyframes mascotWave { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-18deg); } 50% { transform: rotate(4deg); } 75% { transform: rotate(-10deg); } }
+.mascot-eye { animation: mascotBlink 4.2s ease-in-out infinite; transform-origin: center; }
+.mascot-eye.right { animation-delay: 0.05s; }
+@keyframes mascotBlink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+.mascot-shadow { animation: mascotShadow 4.5s ease-in-out infinite; transform-origin: center; }
+@keyframes mascotShadow { 0%,100% { transform: scale(1); opacity: 0.35; } 50% { transform: scale(0.82); opacity: 0.2; } }
+
+.hero-badge {
+  position: absolute; right: 6%; bottom: 8%; width: 108px; height: 108px; border-radius: 50%;
+  background: var(--pure-white); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; box-shadow: 0 16px 34px rgba(0,0,0,0.15);
+  opacity: 0; transform: scale(0.6) rotate(-10deg);
+  animation: badgeIn 0.8s 1.7s cubic-bezier(.34,1.56,.64,1) forwards, badgeFloat 5s 2.5s ease-in-out infinite;
+}
+@keyframes badgeIn { to { opacity: 1; transform: scale(1) rotate(-8deg); } }
+@keyframes badgeFloat { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-10px) rotate(-4deg); } }
+.hero-badge strong { font-size: 0.7rem; letter-spacing: 0.08em; color: var(--primary-red); }
+.hero-badge span { font-size: 0.55rem; letter-spacing: 0.06em; color: #888; margin-top: 2px; }
+
+.page-header { padding: 10rem 5% 4rem; text-align: center; }
+.page-header h1 { font-size: 4rem; color: var(--primary-red); }
+.page-header p { color: #777; margin-top: 0.75rem; font-size: 1.05rem; }
+
+/* Buttons */
+.btn {
+  padding: 1rem 3rem; background-color: var(--primary-red); color: var(--pure-white);
+  border: none; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; display: inline-block; text-decoration: none;
+}
+.btn::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background-color: var(--dark-red); transition: left 0.4s ease; z-index: 1;
+}
+.btn span { position: relative; z-index: 2; }
+.btn:hover::before { left: 0; }
+.btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(217, 4, 41, 0.3); }
+
+/* Grid & Products */
+.collection { padding: 4rem 5% 10rem; background-color: var(--pure-white); }
+.collection-label { text-align: center; text-transform: uppercase; letter-spacing: 3px; font-size: 0.8rem; color: #999; margin-bottom: 3rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 3rem; }
+.product-card {
+  background: var(--off-white); border-radius: 20px; overflow: hidden;
+  transition: transform 0.4s cubic-bezier(.2,.8,.2,1), box-shadow 0.4s ease;
+  text-decoration: none; display: block; cursor: pointer;
+}
+.product-image {
+  width: 100%; height: 380px; background-color: #EAEAEA;
+  background-size: cover; background-position: center; transition: transform 0.7s ease; position: relative;
+}
+.product-badge {
+  position: absolute; top: 1rem; left: 1rem; background: var(--primary-red); color: white;
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+  padding: 0.4rem 0.7rem; border-radius: 100px; animation: badgePop 0.5s 0.1s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes badgePop { from { opacity: 0; transform: scale(0.4) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+.product-quickadd {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 0.9rem; text-align: center;
+  background: rgba(43,45,66,0.88); color: #fff; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+.product-card:hover .product-quickadd { transform: translateY(0); }
+.product-card:hover .product-image { transform: scale(1.06); }
+.product-card:hover {
+  transform: translateY(-10px) perspective(900px) rotateX(calc(var(--my,0) * 3deg)) rotateY(calc(var(--mx,0) * -3deg));
+  box-shadow: 0 24px 45px rgba(0,0,0,0.1);
+}
+.product-info { padding: 1.75rem 1.5rem; text-align: center; }
+.product-title { font-size: 1.3rem; margin-bottom: 0.4rem; color: var(--text-dark); transition: color 0.25s ease; }
+.product-card:hover .product-title { color: var(--primary-red); }
+.product-price { color: var(--primary-red); font-weight: bold; font-size: 1.1rem; }
+
+/* Generic scroll-reveal utility, used outside the SPA view-swap system (footer etc.) */
+.reveal-scroll { opacity: 0; transform: translateY(36px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(.2,.8,.2,1); }
+.reveal-scroll.is-visible { opacity: 1; transform: none; }
+
+/* Interactive Product View */
+#view-product {
+    height: 100vh;
+    width: 100vw;
+    background-color: #FFD1DC;
+    color: #2B2D42;
+    overflow: hidden;
+    position: relative;
+    transition: color 0.4s ease;
+}
+
+.interactive-main {
+    display: flex;
+    height: 100%;
+    padding: 6rem 5% 2.5rem;
+    position: relative;
+    z-index: 5;
+}
+
+.interactive-back {
+    position: absolute;
+    top: 6rem;
+    left: 5%;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 20;
+    opacity: 0.7;
+}
+.interactive-back:hover { opacity: 1; }
+
+.left-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 350px;
+    z-index: 10;
+}
+
+.arrows { display: flex; gap: 10px; margin-bottom: 2rem; }
+.arrows button {
+    background: transparent; border: 1px solid currentColor; color: inherit;
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    font-size: 1.2rem; transition: all 0.3s; opacity: 0.6;
+}
+.arrows button:hover { opacity: 1; transform: scale(1.05); }
+
+.left-col h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 1.5rem; font-weight: 600; }
+.left-col p.desc { font-size: 0.95rem; line-height: 1.6; opacity: 0.8; margin-bottom: 2.5rem; }
+
+.interact-btn {
+    background-color: var(--text-dark); color: var(--pure-white); border: none;
+    padding: 12px 30px; border-radius: 30px; font-weight: bold; font-size: 0.9rem;
+    cursor: pointer; display: inline-flex; align-items: center; width: fit-content;
+    text-transform: uppercase; letter-spacing: 1px; transition: transform 0.3s, background-color 0.3s;
+}
+.interact-btn.added { background-color: #2e7d32; }
+.interact-btn:hover { transform: translateY(-2px); }
+
+.center-col {
+    flex: 1.5; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; position: relative;
+}
+
+.product-image-container { position: relative; width: 100%; height: 60vh; display: flex; justify-content: center; align-items: center; }
+.main-jacket { width: 100%; max-width: 450px; object-fit: contain; filter: drop-shadow(0 30px 30px rgba(0,0,0,0.15)); }
+.tagline { text-align: center; font-size: 1.1rem; font-weight: 500; letter-spacing: 1px; position: absolute; bottom: 5%; font-style: italic; opacity: 0.8;}
+
+.right-col {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-end; text-align: right; max-width: 300px;
+}
+
+.price-section { margin-bottom: 3rem; }
+.price-current { font-size: 2.5rem; font-weight: bold; display: block; }
+.price-old { font-size: 1.2rem; text-decoration: line-through; opacity: 0.6; }
+
+.size-section { margin-bottom: auto; }
+.size-section p { font-size: 0.9rem; margin-bottom: 1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+.sizes { display: flex; gap: 10px; justify-content: flex-end; }
+.sizes button {
+    width: 45px; height: 45px; border-radius: 50%; border: 1px solid currentColor;
+    background: transparent; color: inherit; font-weight: 600; cursor: pointer; transition: all 0.3s; opacity: 0.6;
+}
+.sizes button.active, .sizes button:hover { opacity: 1; background: currentColor; color: var(--off-white); }
+
+.thumbnail-container {
+    width: 120px; height: 140px; background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px); border-radius: 16px; display: flex;
+    justify-content: center; align-items: center; cursor: pointer; transition: transform 0.3s;
+}
+.thumbnail-container:hover { transform: scale(1.05) translateY(-5px); }
+.thumb-img { width: 80%; object-fit: contain; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+
+/* Cart */
+.cart-list { max-width: 700px; margin: 0 auto; text-align: left; padding: 0 5%; }
+.cart-item { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--line); }
+.cart-item-img { width: 90px; height: 90px; min-width: 90px; border-radius: 12px; background-size: cover; background-position: center; }
+.cart-item-info { flex: 1; }
+.cart-item-info h4 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+.cart-item-cat { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 0.3rem; }
+.cart-item-price { color: var(--primary-red); font-weight: bold; font-size: 0.95rem; }
+.cart-qty { display: flex; align-items: center; gap: 0.6rem; }
+.cart-qty button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; }
+.cart-item-remove { background: none; border: none; color: #999; text-decoration: underline; cursor: pointer; font-size: 0.8rem; margin-left: 1rem; }
+.cart-summary { padding-top: 1.5rem; }
+.cart-row { display: flex; justify-content: space-between; padding: 0.4rem 0; color: #777; }
+.cart-total { display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 0.5rem; border-top: 1px solid var(--line); font-size: 1.3rem; font-weight: bold; }
+
+/* Footer */
+.site-footer { background: var(--text-dark); color: rgba(255,255,255,0.75); padding: 5rem 5% 2rem; }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 3rem; max-width: 1200px; margin: 0 auto; }
+.footer-brand h3 { color: #fff; font-size: 1.6rem; margin-bottom: 0.8rem; }
+.footer-brand p { font-size: 0.9rem; line-height: 1.6; max-width: 280px; }
+.footer-col h4 { color: #fff; font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 1.2rem; }
+.footer-col a { display: block; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; margin-bottom: 0.75rem; transition: transform 0.25s ease, color 0.25s ease; }
+.footer-col a:hover { color: #fff; transform: translateX(6px); }
+.footer-social { display: flex; gap: 0.8rem; margin-top: 1.2rem; }
+.footer-social a {
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), background 0.3s ease, border-color 0.3s ease;
+}
+.footer-social a:hover { background: var(--primary-red); border-color: var(--primary-red); transform: translateY(-4px) scale(1.08); }
+.footer-bottom {
+  max-width: 1200px; margin: 3.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12);
+  display: flex; justify-content: space-between; font-size: 0.75rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.5);
+}
+.whatsapp-fab {
+  position: fixed; right: 22px; bottom: 22px; z-index: 60; background: #1f1f1f; color: #fff;
+  border-radius: 999px; padding: 14px 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em;
+  text-decoration: none; box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease;
+  animation: fabIn 0.6s 2s cubic-bezier(.34,1.56,.64,1) both;
+}
+.whatsapp-fab:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 18px 40px rgba(0,0,0,0.3); }
+@keyframes fabIn { from { opacity: 0; transform: scale(0.5) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+@media (max-width: 900px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-brand { grid-column: 1 / -1; }
+}
+
+@media (max-width: 768px) {
+  .interactive-main { flex-direction: column; align-items: center; overflow-y: auto; padding-top: 8rem; }
+  .left-col, .right-col { text-align: center; max-width: 100%; align-items: center; }
+  .right-col { padding-top: 2rem; }
+  .sizes { justify-content: center; }
+  .hero-stage { min-height: 340px; padding: 3rem 1.2rem 2rem; }
+  .hero-badge { width: 86px; height: 86px; right: 4%; bottom: 4%; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 0.6rem; text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  .hero-stage { animation: none; }
+  .mascot-wrap, .mascot-arm-left, .mascot-eye, .mascot-shadow, .hero-badge { animation: none !important; }
+  .reveal-scroll { opacity: 1 !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="curtain">M&amp;E</div>
+
+<nav>
+  <div class="logo"><a data-view="home">M&amp;E</a></div>
+  <div class="nav-links">
+    <a data-view="boys">Boys</a>
+    <a data-view="girls">Girls</a>
+    <a data-view="sets">Sets</a>
+    <a data-view="cart">Cart (<span class="cart-count">0</span>)</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<section id="view-home" class="view active">
+  <section class="hero">
+    <h1 class="hero-text">Redefining</h1>
+    <h1 class="hero-text">Kids Fashion</h1>
+    <p class="hero-text">Premium garments combining architectural form, tactile pleasure, and visual harmony.</p>
+    <div class="hero-text"><a class="btn" data-view="girls"><span>Explore Collections</span></a></div>
+
+    <div class="hero-stage hero-text">
+      <span class="hero-stage-caption">Meet the M&amp;E mascot</span>
+      <div class="mascot-wrap">
+        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="mascot-shadow" cx="128" cy="228" rx="58" ry="12" fill="#2B2D42"/>
+          <!-- legs -->
+          <rect x="100" y="176" width="18" height="42" rx="9" fill="#2B2D42"/>
+          <rect x="138" y="176" width="18" height="42" rx="9" fill="#2B2D42"/>
+          <ellipse cx="109" cy="220" rx="16" ry="9" fill="#D90429"/>
+          <ellipse cx="147" cy="220" rx="16" ry="9" fill="#D90429"/>
+          <!-- body (hoodie) -->
+          <path d="M78 118 Q78 84 128 84 Q178 84 178 118 L182 180 Q182 196 166 196 L90 196 Q74 196 74 180 Z" fill="#FFD1DC"/>
+          <path d="M108 118 Q108 100 128 100 Q148 100 148 118 L146 132 Q128 140 110 132 Z" fill="#fff"/>
+          <!-- right arm (static) -->
+          <path d="M176 122 Q198 128 200 158 Q201 172 188 174 Q176 176 174 162 L172 128 Z" fill="#FFD1DC"/>
+          <circle cx="189" cy="170" r="11" fill="#F6C6A3"/>
+          <!-- left arm (waving) -->
+          <g class="mascot-arm-left">
+            <path d="M80 122 Q56 118 48 92 Q44 78 57 73 Q69 69 74 82 L84 120 Z" fill="#FFD1DC"/>
+            <circle cx="53" cy="80" r="11" fill="#F6C6A3"/>
+          </g>
+          <!-- head -->
+          <circle cx="128" cy="70" r="46" fill="#F6C6A3"/>
+          <path d="M82 66 Q80 20 128 18 Q176 20 174 66 Q174 40 128 38 Q82 40 82 66 Z" fill="#D90429"/>
+          <circle class="mascot-eye left" cx="112" cy="72" r="5.5" fill="#2B2D42"/>
+          <circle class="mascot-eye right" cx="144" cy="72" r="5.5" fill="#2B2D42"/>
+          <path d="M114 90 Q128 100 142 90" stroke="#2B2D42" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <circle cx="100" cy="82" r="6" fill="#FDA4AF" opacity="0.7"/>
+          <circle cx="156" cy="82" r="6" fill="#FDA4AF" opacity="0.7"/>
+          <circle cx="128" cy="14" r="7" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="hero-badge">
+        <strong>PREMIUM</strong>
+        <span>KIDSWEAR</span>
+      </div>
+    </div>
+  </section>
+  <section class="collection">
+    <div class="collection-label hero-text">Featured This Season</div>
+    <div class="grid" data-grid="home"></div>
+  </section>
+</section>
+
+<!-- BOYS -->
+<section id="view-boys" class="view">
+  <div class="page-header">
+    <h1 class="hero-text">Boys Collection</h1>
+    <p class="hero-text">Structured outerwear and everyday essentials, built for movement.</p>
+  </div>
+  <section class="collection">
+    <div class="grid" data-grid="boys"></div>
+  </section>
+</section>
+
+<!-- GIRLS -->
+<section id="view-girls" class="view">
+  <div class="page-header">
+    <h1 class="hero-text">Girls Collection</h1>
+    <p class="hero-text">Signature silhouettes finished with our red-and-white motif.</p>
+  </div>
+  <section class="collection">
+    <div class="grid" data-grid="girls"></div>
+  </section>
+</section>
+
+<!-- SETS -->
+<section id="view-sets" class="view">
+  <div class="page-header">
+    <h1 class="hero-text">Sets Collection</h1>
+    <p class="hero-text">Coordinated two-piece sets, ready to wear straight off the hanger.</p>
+  </div>
+  <section class="collection">
+    <div class="grid" data-grid="sets"></div>
+  </section>
+</section>
+
+<!-- INTERACTIVE PRODUCT VIEW -->
+<section id="view-product" class="view">
+    <div class="interactive-back" data-view="__back">&larr; Back</div>
+    <main class="interactive-main">
+        <div class="left-col hero-text">
+            <div class="arrows">
+                <button id="prevBtn">&lt;</button>
+                <button id="nextBtn">&gt;</button>
+            </div>
+            <h1 id="dyn-title">Playful &<br>Vibrant</h1>
+            <p class="desc" id="dyn-desc">Designed to elevate kidswear, this set wraps them in lightweight, breathable comfort ready for any daily adventure.</p>
+            <button class="interact-btn" id="pd-add-btn" data-add-to-cart=""><span>Add to Cart</span></button>
+        </div>
+
+        <div class="center-col hero-text">
+            <div class="product-image-container">
+                <img src="https://pngimg.com/d/tshirt_PNG5454.png" alt="Kidswear" class="main-jacket" id="mainJacket">
+            </div>
+            <p class="tagline">Joy,<br>woven in every thread</p>
+        </div>
+
+        <div class="right-col hero-text">
+            <div class="price-section">
+                <span class="price-current" id="dyn-price">$58</span>
+                <span class="price-old">$75</span>
+            </div>
+
+            <div class="size-section">
+                <p>Choose Age Size</p>
+                <div class="sizes">
+                    <button class="active">4Y</button>
+                    <button>6Y</button>
+                    <button>8Y</button>
+                </div>
+            </div>
+
+            <div class="thumbnail-container" id="thumbBtn">
+                <img src="https://pngimg.com/d/tshirt_PNG5450.png" alt="Next Color" class="thumb-img" id="thumbJacket">
+            </div>
+        </div>
+    </main>
+</section>
+
+<!-- CART -->
+<section id="view-cart" class="view">
+  <div class="page-header"><h1 class="hero-text">Your Cart</h1></div>
+  <section class="collection" style="text-align:center;">
+    <div id="cart-content"></div>
+  </section>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand reveal-scroll">
+      <h3>M&amp;E</h3>
+      <p>Premium kids &amp; juniors wear made for little personalities and big memories.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram">IG</a>
+        <a href="#" aria-label="Facebook">FB</a>
+        <a href="https://wa.me/923014453922" aria-label="WhatsApp">WA</a>
+      </div>
+    </div>
+    <div class="footer-col reveal-scroll">
+      <h4>Shop</h4>
+      <a data-view="boys">Boys</a>
+      <a data-view="girls">Girls</a>
+      <a data-view="sets">Sets</a>
+    </div>
+    <div class="footer-col reveal-scroll">
+      <h4>Help</h4>
+      <a data-view="cart">Cart</a>
+      <a href="https://wa.me/923014453922">WhatsApp Support</a>
+    </div>
+    <div class="footer-col reveal-scroll">
+      <h4>Visit Us</h4>
+      <a href="#" style="pointer-events:none;">Al Karim Mall, Allama Iqbal Town, Lahore</a>
+      <a href="tel:03014453922">0301 4453922</a>
+    </div>
+  </div>
+  <div class="footer-bottom reveal-scroll">
+    <span>&copy; 2026 M&amp;E Kids &amp; Juniors Wear</span>
+    <span>QUALITY &bull; COMFORT &bull; JOY</span>
+  </div>
+</footer>
+
+<a class="whatsapp-fab" href="https://wa.me/923014453922" target="_blank" rel="noopener">WHATSAPP</a>
+
+<script>
+const IMG = {
+  knit:  'https://images.unsplash.com/photo-1519238396255-a0bc8527a909?auto=format&fit=crop&w=1000&q=80',
+  denim: 'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?auto=format&fit=crop&w=1000&q=80',
+  red:   'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&w=1000&q=80'
+};
+
+const PRODUCTS = {
+  'knit-set': { name: 'Classic Knit Set', price: 45, image: IMG.knit, category: 'Sets', badge: 'Bestseller' },
+  'weekend-set': { name: 'Weekend Explorer Set', price: 72, image: IMG.denim, category: 'Sets' },
+  'play-set': { name: 'Everyday Play Set', price: 65, image: IMG.knit, category: 'Sets' },
+  'holiday-set': { name: 'Holiday Velour Set', price: 78, image: IMG.red, category: 'Sets', badge: 'New' },
+  'denim-jacket': { name: 'Urban Denim Jacket', price: 60, image: IMG.denim, category: 'Boys', badge: 'Bestseller' },
+  'bomber-jacket': { name: 'Structured Bomber', price: 68, image: IMG.denim, category: 'Boys' },
+  'cargo-pants': { name: 'Essential Cargo Pants', price: 42, image: IMG.knit, category: 'Boys' },
+  'graphic-tee': { name: 'Architectural Graphic Tee', price: 28, image: IMG.knit, category: 'Boys', badge: 'New' },
+  'red-pullover': { name: 'Signature Red Pullover', price: 55, image: IMG.red, category: 'Girls', badge: 'Bestseller' },
+  'floral-dress': { name: 'Floral Sundress', price: 58, image: IMG.red, category: 'Girls' },
+  'knit-cardigan': { name: 'Ribbed Knit Cardigan', price: 50, image: IMG.red, category: 'Girls' },
+  'pleated-skirt': { name: 'Pleated Midi Skirt', price: 46, image: IMG.red, category: 'Girls', badge: 'New' }
+};
+
+const GRIDS = {
+  home:  ['knit-set', 'denim-jacket', 'red-pullover', 'holiday-set'],
+  boys:  ['denim-jacket', 'bomber-jacket', 'cargo-pants', 'graphic-tee'],
+  girls: ['red-pullover', 'floral-dress', 'knit-cardigan', 'pleated-skirt'],
+  sets:  ['knit-set', 'weekend-set', 'play-set', 'holiday-set']
+};
+
+function fmt(n) { return '$' + n.toFixed(2); }
+
+function cardHTML(id) {
+  const p = PRODUCTS[id];
+  const badge = p.badge ? `<div class="product-badge">${p.badge}</div>` : '';
+  return `<a class="product-card" data-product="${id}">
+    <div class="product-image" style="background-image:url('${p.image}')">${badge}</div>
+    <div class="product-info">
+      <h3 class="product-title">${p.name}</h3>
+      <p class="product-price">${fmt(p.price)}</p>
+    </div>
+  </a>`;
+}
+
+document.querySelectorAll('[data-grid]').forEach(grid => {
+  const key = grid.getAttribute('data-grid');
+  grid.innerHTML = GRIDS[key].map(cardHTML).join('');
+});
+
+const kidswearVariants = [
+    { bg: "#FFD1DC", img: "https://pngimg.com/d/tshirt_PNG5454.png", textColor: "#2B2D42" },
+    { bg: "#AEC6CF", img: "https://pngimg.com/d/tshirt_PNG5450.png", textColor: "#2B2D42" },
+    { bg: "#FDFD96", img: "https://pngimg.com/d/tshirt_PNG5448.png", textColor: "#2B2D42" },
+    { bg: "#77DD77", img: "https://pngimg.com/d/tshirt_PNG5447.png", textColor: "#2B2D42" }
+];
+let currentVariant = 0;
+
+gsap.to("#mainJacket", { y: -20, duration: 2, yoyo: true, repeat: -1, ease: "sine.inOut" });
+
+function updateScene(index) {
+    const product = kidswearVariants[index];
+    const nextProduct = kidswearVariants[(index + 1) % kidswearVariants.length];
+
+    gsap.to("#view-product", { backgroundColor: product.bg, color: product.textColor, duration: 0.8, ease: "power2.inOut" });
+    
+    const tl = gsap.timeline();
+    tl.to("#mainJacket", { opacity: 0, scale: 0.9, duration: 0.3, ease: "power1.in" })
+      .call(() => { document.getElementById('mainJacket').src = product.img; })
+      .to("#mainJacket", { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.5)" });
+
+    gsap.to("#thumbJacket", { opacity: 0, scale: 0.8, duration: 0.3, onComplete: () => {
+        document.getElementById('thumbJacket').src = nextProduct.img;
+        gsap.to("#thumbJacket", { opacity: 1, scale: 1, duration: 0.4 });
+    }});
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => { currentVariant = (currentVariant + 1) % kidswearVariants.length; updateScene(currentVariant); });
+document.getElementById('prevBtn').addEventListener('click', () => { currentVariant = (currentVariant - 1 + kidswearVariants.length) % kidswearVariants.length; updateScene(currentVariant); });
+document.getElementById('thumbBtn').addEventListener('click', () => { currentVariant = (currentVariant + 1) % kidswearVariants.length; updateScene(currentVariant); });
+
+document.querySelectorAll('.sizes button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.sizes button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+let cart = []; 
+function updateCartCount() {
+  const total = cart.reduce((n, i) => n + i.qty, 0);
+  document.querySelectorAll('.cart-count').forEach(el => {
+    el.textContent = total;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  });
+}
+function addToCart(id, qty = 1) { const existing = cart.find(i => i.id === id); if (existing) existing.qty += qty; else cart.push({ id, qty }); updateCartCount(); }
+function removeFromCart(id) { cart = cart.filter(i => i.id !== id); updateCartCount(); renderCart(); }
+
+function renderCart() {
+  const container = document.getElementById('cart-content');
+  if (cart.length === 0) {
+    container.innerHTML = `<div class="cart-empty"><p style="font-size:1.2rem;margin-bottom:2rem;">Your cart is empty.</p><a class="btn" data-view="home"><span>Shop Now</span></a></div>`;
+    bindDynamicLinks(container); return;
+  }
+  let subtotal = 0;
+  const rows = cart.map(item => {
+    const p = PRODUCTS[item.id]; subtotal += p.price * item.qty;
+    return `<div class="cart-item"><div class="cart-item-img" style="background-image:url('${p.image}')"></div><div class="cart-item-info"><h4>${p.name}</h4><div class="cart-item-price">${fmt(p.price)}</div></div><div class="cart-qty"><span>Qty: ${item.qty}</span></div><button class="cart-item-remove" data-remove="${item.id}">Remove</button></div>`;
+  }).join('');
+  container.innerHTML = `<div class="cart-list">${rows}<div class="cart-summary"><div class="cart-total"><span>Total</span><span>${fmt(subtotal)}</span></div></div></div>`;
+  container.querySelectorAll('[data-remove]').forEach(btn => { btn.addEventListener('click', e => { e.preventDefault(); removeFromCart(btn.getAttribute('data-remove')); }); });
+  bindDynamicLinks(container);
+}
+
+let lastCategoryView = 'home';
+const categoryToView = { Sets: 'sets', Boys: 'boys', Girls: 'girls' };
+
+function renderProduct(id) {
+  const p = PRODUCTS[id];
+  document.getElementById('dyn-title').innerHTML = p.name.replace(' ', '<br>');
+  document.getElementById('dyn-price').textContent = fmt(p.price);
+  
+  const addBtn = document.getElementById('pd-add-btn');
+  addBtn.setAttribute('data-add-to-cart', id);
+  addBtn.querySelector('span').textContent = 'Add to Cart';
+  addBtn.classList.remove('added');
+
+  lastCategoryView = categoryToView[p.category] || 'home';
+  currentVariant = 0; 
+  updateScene(0);
+}
+
+let transitioning = false;
+function playEnterAnimation(view) {
+  const els = view.querySelectorAll('.hero-text, .product-card');
+  gsap.killTweensOf(['.curtain', ...els]);
+  gsap.set(els, { opacity: 0, y: 40 });
+  const tl = gsap.timeline({ onComplete: () => gsap.set(els, { opacity: 1, y: 0 }) });
+  tl.to('.curtain', { yPercent: -100, duration: 1.2, ease: 'power4.inOut' }, 0);
+  if(els.length) tl.to(els, { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power2.out' }, 0.4);
+}
+
+function showView(id) {
+  if (id === '__back') id = lastCategoryView;
+  const current = document.querySelector('.view.active');
+  const next = document.getElementById('view-' + id);
+  if (!next || next === current || transitioning) return;
+  transitioning = true;
+  gsap.to('.curtain', {
+    yPercent: 0, duration: 0.8, ease: 'power4.inOut',
+    onComplete: () => {
+      current.classList.remove('active'); next.classList.add('active'); window.scrollTo(0, 0);
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('active', a.getAttribute('data-view') === id));
+      playEnterAnimation(next); transitioning = false;
+    }
+  });
+}
+
+function bindDynamicLinks(scope) {
+  scope.querySelectorAll('[data-view]:not([data-add-to-cart])').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); showView(el.getAttribute('data-view')); });
+  });
+  scope.querySelectorAll('[data-add-to-cart]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault(); const id = el.getAttribute('data-add-to-cart');
+      if (!id) return; addToCart(id);
+      const span = el.querySelector('span'); span.textContent = 'Added \u2713';
+      el.classList.add('added');
+      setTimeout(() => { span.textContent = 'Add to Cart'; el.classList.remove('added'); }, 1200);
+    });
+  });
+  scope.querySelectorAll('[data-product]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault(); renderProduct(el.getAttribute('data-product')); showView('product');
+    });
+  });
+}
+
+/* Nav compacts once the page has scrolled */
+const siteNav = document.querySelector('nav');
+if (siteNav) {
+  const setNavScrolled = () => siteNav.classList.toggle('is-scrolled', window.scrollY > 30);
+  window.addEventListener('scroll', setNavScrolled, { passive: true });
+}
+
+/* Pointer tilt for product cards - re-bound whenever a grid is (re)rendered */
+function attachCardTilt(scope) {
+  scope.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const mx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+      const my = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      card.style.setProperty('--mx', mx.toFixed(2));
+      card.style.setProperty('--my', my.toFixed(2));
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.setProperty('--mx', 0);
+      card.style.setProperty('--my', 0);
+    });
+  });
+}
+document.querySelectorAll('[data-grid]').forEach(grid => attachCardTilt(grid));
+
+/* Scroll-reveal for elements outside the SPA view-swap system (footer) */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal-scroll').forEach(el => revealObserver.observe(el));
+
+window.addEventListener('load', () => {
+  bindDynamicLinks(document); renderCart(); updateCartCount();
+  const homeNavBtn = document.querySelector('.logo a[data-view="home"]');
+  if (homeNavBtn) homeNavBtn.classList.add('active');
+  playEnterAnimation(document.getElementById('view-home'));
+});
+</script>
+</body>
+</html>

@@ -35,7 +35,12 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors());
+const frontendUrl = process.env.FRONTEND_URL?.trim().replace(/\/+$/, "");
+app.use(
+  frontendUrl
+    ? cors({ origin: frontendUrl, credentials: true })
+    : cors(),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

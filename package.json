@@ -4,8 +4,13 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "artifacts/*",
-    "lib/*",
+    "backend/api-server",
+    "backend/api-spec",
+    "backend/api-zod",
+    "backend/db",
+    "frontend/me-garments",
+    "frontend/mockup-sandbox",
+    "frontend/api-client-react",
     "scripts"
   ],
   "scripts": {

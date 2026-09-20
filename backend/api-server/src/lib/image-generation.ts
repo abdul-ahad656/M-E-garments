@@ -55,12 +55,20 @@ export function isImageGenerationConfigured(): boolean {
 
 function resolveModuleRoot(): string {
   const override = process.env.IMAGE_GENERATION_MODULE_PATH?.trim();
+  const here = fileURLToPath(new URL(".", import.meta.url));
   const candidates = [
     override,
+    // Sibling of api-server when cwd is backend/api-server
+    path.resolve(process.cwd(), "..", "Image_Generation_Module"),
     path.resolve(process.cwd(), "Image_Generation_Module"),
+    // Legacy: module at repo root
     path.resolve(process.cwd(), "..", "..", "Image_Generation_Module"),
-    path.resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..", "Image_Generation_Module"),
-    path.resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "Image_Generation_Module"),
+    // From src/lib → backend/Image_Generation_Module
+    path.resolve(here, "..", "..", "..", "Image_Generation_Module"),
+    // From dist/ → backend/Image_Generation_Module
+    path.resolve(here, "..", "..", "Image_Generation_Module"),
+    // From src/lib → repo-root Image_Generation_Module (legacy)
+    path.resolve(here, "..", "..", "..", "..", "Image_Generation_Module"),
   ].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {

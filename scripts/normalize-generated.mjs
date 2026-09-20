@@ -2,8 +2,8 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const roots = [
-  "lib/api-client-react/src/generated",
-  "lib/api-zod/src/generated",
+  "frontend/api-client-react/src/generated",
+  "backend/api-zod/src/generated",
 ];
 
 async function collectTypeScriptFiles(directory) {

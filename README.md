@@ -5,12 +5,12 @@ AI-assisted premium kidswear storefront with Supabase as the commerce source of 
 ## Stack
 
 - npm workspaces, Node.js 20+, TypeScript 5.9
-- Frontend: React + Vite (`artifacts/me-garments`)
-- API: Express 5 (`artifacts/api-server`)
-- Commerce + app data: Supabase/PostgreSQL (`supabase/migrations`)
+- Frontend: React + Vite (`frontend/me-garments`)
+- API: Express 5 (`backend/api-server`)
+- Commerce + app data: Supabase/PostgreSQL (`backend/supabase/migrations`)
 - Image files: Cloudflare R2
 - Auth: Clerk
-- API contract: OpenAPI → Orval (`lib/api-spec`)
+- API contract: OpenAPI → Orval (`backend/api-spec`)
 
 ## Setup
 
@@ -20,7 +20,7 @@ cp .env.example .env
 # fill in Supabase, Clerk, OpenAI, R2, and STORE_CURRENCY (default PKR)
 ```
 
-Apply SQL migrations in `supabase/migrations` (including `0003_commerce_core.sql`) to your Supabase project before running commerce flows.
+Apply SQL migrations in `backend/supabase/migrations` (including `0003_commerce_core.sql`) to your Supabase project before running commerce flows.
 
 ## Run locally
 
@@ -38,6 +38,16 @@ If `/api` returns Apache HTML 404s, something else is bound to the API port
 (common with XAMPP on 8080). Keep `PORT=3001` in `.env`, or set
 `API_PROXY_TARGET` to match whatever port the API is using.
 
+## Production URLs
+
+Leave `VITE_API_BASE_URL` empty locally so Vite proxies `/api` to the API.
+In production:
+
+- Set `VITE_API_BASE_URL` to the public API origin on the frontend host (e.g. Vercel).
+- Set `FRONTEND_URL` to the public storefront origin on the API host (restricts CORS when set).
+- Allow both URLs in the Clerk dashboard (origins / redirects).
+- On Vercel, use an SPA fallback rewrite only (`/(.*)` → `/index.html`); do not hardcode an `/api` proxy rewrite.
+
 ## Useful scripts
 
 ```bash
@@ -50,14 +60,15 @@ npm run validate
 
 | Path | Purpose |
 |------|---------|
-| `artifacts/me-garments` | React storefront + admin portal |
-| `artifacts/api-server` | Express API (commerce, cart, orders, assistant, account) |
-| `artifacts/mockup-sandbox` | UI component sandbox |
-| `lib/api-spec` | OpenAPI source of truth |
-| `lib/api-client-react` | Generated React Query hooks |
-| `lib/api-zod` | Generated Zod schemas |
-| `lib/db` | Drizzle / Postgres helpers |
-| `supabase/migrations` | Application SQL migrations |
+| `frontend/me-garments` | React storefront + admin portal |
+| `backend/api-server` | Express API (commerce, cart, orders, assistant, account) |
+| `frontend/mockup-sandbox` | UI component sandbox |
+| `backend/api-spec` | OpenAPI source of truth |
+| `frontend/api-client-react` | Generated React Query hooks |
+| `backend/api-zod` | Generated Zod schemas |
+| `backend/db` | Drizzle / Postgres helpers |
+| `backend/supabase/migrations` | Application SQL migrations |
+| `backend/Image_Generation_Module` | Python on-model image generation |
 
 ## Architecture notes
 
@@ -69,4 +80,5 @@ npm run validate
 - Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, and `R2_PUBLIC_BASE_URL` for admin image uploads (bucket must be publicly readable).
 - Set `STORE_CURRENCY` (default `PKR`) for cart and order money amounts.
 - Set `VITE_CLERK_PUBLISHABLE_KEY` for storefront auth.
-- Change `lib/api-spec/openapi.yaml` first, then run `npm run codegen`.
+- Set `VITE_API_BASE_URL` (frontend) and `FRONTEND_URL` (API) in production; see **Production URLs**.
+- Change `backend/api-spec/openapi.yaml` first, then run `npm run codegen`.
