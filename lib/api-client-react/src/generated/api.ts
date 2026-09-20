@@ -25,6 +25,7 @@ import type {
   AdminInventoryAdjustInput,
   AdminInventoryItem,
   AdminInventoryList,
+  AdminMediaGenerateInput,
   AdminMediaUploadInput,
   AdminMediaUploadResult,
   AdminOrderCancelInput,
@@ -2472,6 +2473,97 @@ export const useUploadAdminMedia = <TError = ErrorType<BadRequestResponse | Unau
         TContext
       > => {
       return useMutation(getUploadAdminMediaMutationOptions(options));
+    }
+
+export const getGenerateAdminMediaUrl = () => {
+
+
+
+
+  return `/api/admin/media/generate`
+}
+
+/**
+ * @summary Generate an on-model product image from a garment photo, upload it to R2, and return the public URL
+ */
+export const generateAdminMedia = async (adminMediaGenerateInput: AdminMediaGenerateInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminMediaUploadResult> => {
+    const formData = new FormData();
+formData.append(`garment`, adminMediaGenerateInput.garment);
+if(adminMediaGenerateInput.age !== undefined) {
+ formData.append(`age`, adminMediaGenerateInput.age);
+ }
+if(adminMediaGenerateInput.gender !== undefined) {
+ formData.append(`gender`, adminMediaGenerateInput.gender);
+ }
+if(adminMediaGenerateInput.background !== undefined) {
+ formData.append(`background`, adminMediaGenerateInput.background);
+ }
+if(adminMediaGenerateInput.customPrompt !== undefined) {
+ formData.append(`customPrompt`, adminMediaGenerateInput.customPrompt);
+ }
+if(adminMediaGenerateInput.aspectRatio !== undefined) {
+ formData.append(`aspectRatio`, adminMediaGenerateInput.aspectRatio);
+ }
+
+  return customFetch<AdminMediaUploadResult>(getGenerateAdminMediaUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getGenerateAdminMediaMutationKey = () => ['generateAdminMedia'] as const;
+
+export const getGenerateAdminMediaMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAdminMedia>>, TError,GenerateAdminMediaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateAdminMedia>>, TError,GenerateAdminMediaMutationVariables, TContext> => {
+
+const mutationKey = getGenerateAdminMediaMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateAdminMedia>>, GenerateAdminMediaMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateAdminMedia(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateAdminMediaMutationResult = NonNullable<Awaited<ReturnType<typeof generateAdminMedia>>>
+    export type GenerateAdminMediaMutationBody = BodyType<AdminMediaGenerateInput>
+    export type GenerateAdminMediaMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>
+    export type GenerateAdminMediaMutationVariables = {data: BodyType<AdminMediaGenerateInput>}
+
+    /**
+ * @summary Generate an on-model product image from a garment photo, upload it to R2, and return the public URL
+ */
+export const useGenerateAdminMedia = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAdminMedia>>, TError,GenerateAdminMediaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateAdminMedia>>,
+        TError,
+        GenerateAdminMediaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGenerateAdminMediaMutationOptions(options));
     }
 
 export const getListAdminProductsUrl = (params?: ListAdminProductsParams,) => {

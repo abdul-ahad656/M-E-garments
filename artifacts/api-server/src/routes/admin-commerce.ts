@@ -53,6 +53,12 @@ import {
   refundAdminOrder,
 } from "../lib/order-repository";
 import {
+  generateGarmentImageFile,
+  ImageGenerationError,
+  ImageGenerationNotConfiguredError,
+  ImageGenerationValidationError,
+} from "../lib/image-generation";
+import {
   R2_MAX_FILE_BYTES,
   R2_MAX_FILES,
   R2NotConfiguredError,
@@ -69,6 +75,14 @@ const mediaUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     files: R2_MAX_FILES,
+    fileSize: R2_MAX_FILE_BYTES,
+  },
+});
+
+const mediaGenerate = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    files: 1,
     fileSize: R2_MAX_FILE_BYTES,
   },
 });
@@ -92,6 +106,33 @@ const parseMediaUpload: RequestHandler = (req, res, next) => {
     next(error);
   });
 };
+
+const parseMediaGenerate: RequestHandler = (req, res, next) => {
+  mediaGenerate.single("garment")(req, res, (error: unknown) => {
+    if (!error) {
+      next();
+      return;
+    }
+    if (error instanceof multer.MulterError) {
+      const message =
+        error.code === "LIMIT_FILE_SIZE"
+          ? `Each image must be at most ${R2_MAX_FILE_BYTES / (1024 * 1024)}MB`
+          : error.code === "LIMIT_UNEXPECTED_FILE"
+            ? "Send a single garment image in the garment field"
+            : error.message;
+      res.status(400).json({ error: message, code: "INVALID_REQUEST" });
+      return;
+    }
+    next(error);
+  });
+};
+
+function optionalFormString(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, maxLength);
+}
 
 function handleCommerceError(
   res: import("express").Response,
@@ -133,6 +174,62 @@ router.post("/admin/media/upload", parseMediaUpload, async (req, res): Promise<v
     }
     if (error instanceof R2NotConfiguredError) {
       res.status(503).json({ error: error.message, code: "R2_NOT_CONFIGURED" });
+      return;
+    }
+    if (error instanceof R2UploadError) {
+      req.log.error({ err: error }, "Cloudflare R2 media upload failed");
+      res.status(503).json({
+        error: "Cloudflare R2 media upload is unavailable",
+        code: "R2_UNAVAILABLE",
+      });
+      return;
+    }
+    throw error;
+  }
+});
+
+router.post("/admin/media/generate", parseMediaGenerate, async (req, res): Promise<void> => {
+  const file = req.file;
+  if (!file) {
+    res.status(400).json({
+      error: "A JPEG or PNG garment image is required",
+      code: "INVALID_REQUEST",
+    });
+    return;
+  }
+  try {
+    const generated = await generateGarmentImageFile({
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      originalname: file.originalname,
+      size: file.size,
+      age: optionalFormString(req.body?.age, 80),
+      gender: optionalFormString(req.body?.gender, 80),
+      background: optionalFormString(req.body?.background, 2000),
+      customPrompt: optionalFormString(req.body?.customPrompt, 2000),
+      aspectRatio: optionalFormString(req.body?.aspectRatio, 8),
+    });
+    const urls = await uploadProductImages([generated]);
+    res.json(UploadAdminMediaResponse.parse({ urls }));
+  } catch (error) {
+    if (error instanceof ImageGenerationValidationError || error instanceof R2ValidationError) {
+      res.status(400).json({ error: error.message, code: "INVALID_REQUEST" });
+      return;
+    }
+    if (error instanceof ImageGenerationNotConfiguredError) {
+      res.status(503).json({ error: error.message, code: "GEMINI_NOT_CONFIGURED" });
+      return;
+    }
+    if (error instanceof R2NotConfiguredError) {
+      res.status(503).json({ error: error.message, code: "R2_NOT_CONFIGURED" });
+      return;
+    }
+    if (error instanceof ImageGenerationError) {
+      req.log.error({ err: error }, "Gemini garment image generation failed");
+      res.status(503).json({
+        error: "On-model image generation is temporarily unavailable",
+        code: "IMAGE_GENERATION_UNAVAILABLE",
+      });
       return;
     }
     if (error instanceof R2UploadError) {

@@ -248,6 +248,29 @@ export interface AdminMediaUploadResult {
   urls: string[];
 }
 
+export type AdminMediaGenerateInputAspectRatio = typeof AdminMediaGenerateInputAspectRatio[keyof typeof AdminMediaGenerateInputAspectRatio];
+
+
+export const AdminMediaGenerateInputAspectRatio = {
+  '1:1': '1:1',
+  '4:5': '4:5',
+  '3:4': '3:4',
+  '16:9': '16:9',
+} as const;
+
+export interface AdminMediaGenerateInput {
+  garment: Blob;
+  /** @maxLength 80 */
+  age?: string;
+  /** @maxLength 80 */
+  gender?: string;
+  /** @maxLength 2000 */
+  background?: string;
+  /** @maxLength 2000 */
+  customPrompt?: string;
+  aspectRatio?: AdminMediaGenerateInputAspectRatio;
+}
+
 export type AdminProductCreateInputStatus = typeof AdminProductCreateInputStatus[keyof typeof AdminProductCreateInputStatus];
 
 

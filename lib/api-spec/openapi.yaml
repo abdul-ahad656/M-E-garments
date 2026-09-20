@@ -653,6 +653,31 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ApiError" }
+  /admin/media/generate:
+    post:
+      operationId: generateAdminMedia
+      tags: [admin]
+      summary: Generate an on-model product image from a garment photo, upload it to R2, and return the public URL
+      security: [{ ClerkSession: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/AdminMediaGenerateInput" }
+      responses:
+        "200":
+          description: Public HTTPS URL for the generated image
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminMediaUploadResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: Gemini image generation or Cloudflare R2 is unavailable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
   /admin/products:
     get:
       operationId: listAdminProducts
@@ -1274,6 +1299,29 @@ components:
           maxItems: 20
       required: [urls]
       additionalProperties: false
+    AdminMediaGenerateInput:
+      type: object
+      required: [garment]
+      additionalProperties: false
+      properties:
+        garment:
+          type: string
+          format: binary
+        age:
+          type: string
+          maxLength: 80
+        gender:
+          type: string
+          maxLength: 80
+        background:
+          type: string
+          maxLength: 2000
+        customPrompt:
+          type: string
+          maxLength: 2000
+        aspectRatio:
+          type: string
+          enum: ["1:1", "4:5", "3:4", "16:9"]
     AdminProductCreateInput:
       type: object
       properties:

@@ -41,6 +41,28 @@ const orders = vi.hoisted(() => ({
   markAdminOrderPaid: vi.fn(),
 }));
 
+const imageGeneration = vi.hoisted(() => ({
+  generateGarmentImageFile: vi.fn(),
+  ImageGenerationNotConfiguredError: class ImageGenerationNotConfiguredError extends Error {
+    constructor(message = "Gemini image generation is not configured") {
+      super(message);
+      this.name = "ImageGenerationNotConfiguredError";
+    }
+  },
+  ImageGenerationValidationError: class ImageGenerationValidationError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "ImageGenerationValidationError";
+    }
+  },
+  ImageGenerationError: class ImageGenerationError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "ImageGenerationError";
+    }
+  },
+}));
+
 const r2 = vi.hoisted(() => ({
   uploadProductImages: vi.fn(),
   R2_MAX_FILES: 20,
@@ -82,6 +104,7 @@ vi.mock("@clerk/express", () => ({
 
 vi.mock("../lib/commerce-repository", () => commerce);
 vi.mock("../lib/order-repository", () => orders);
+vi.mock("../lib/image-generation", () => imageGeneration);
 vi.mock("../lib/r2", () => r2);
 vi.mock("../lib/admin-repository", () => ({
   listPolicies: vi.fn(),
@@ -311,6 +334,67 @@ describe("admin commerce API", () => {
     await expect(response.json()).resolves.toEqual({
       urls: ["https://pub-example.r2.dev/products/abc-shirt.jpg"],
     });
+    expect(r2.uploadProductImages).toHaveBeenCalledOnce();
+  });
+
+  it("returns 503 when Gemini is not configured for generation", async () => {
+    auth.userId = "staff_1";
+    auth.role = "staff";
+    imageGeneration.generateGarmentImageFile.mockRejectedValue(
+      new imageGeneration.ImageGenerationNotConfiguredError(
+        "Gemini image generation is not configured. Set GEMINI_API_KEY.",
+      ),
+    );
+
+    const form = new FormData();
+    form.append(
+      "garment",
+      new Blob([Uint8Array.from([1, 2, 3])], { type: "image/jpeg" }),
+      "shirt.jpg",
+    );
+
+    const response = await fetch(`${baseUrl}/api/admin/media/generate`, {
+      method: "POST",
+      body: form,
+    });
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "GEMINI_NOT_CONFIGURED",
+    });
+    expect(r2.uploadProductImages).not.toHaveBeenCalled();
+  });
+
+  it("generates an image, uploads it through R2, and returns the public URL", async () => {
+    auth.userId = "admin_1";
+    auth.role = "admin";
+    imageGeneration.generateGarmentImageFile.mockResolvedValue({
+      buffer: Buffer.from([9, 8, 7]),
+      mimetype: "image/png",
+      originalname: "generated-garment.png",
+      size: 3,
+    });
+    r2.uploadProductImages.mockResolvedValue([
+      "https://pub-example.r2.dev/products/abc-generated-garment.png",
+    ]);
+
+    const form = new FormData();
+    form.append(
+      "garment",
+      new Blob([Uint8Array.from([1, 2, 3, 4])], { type: "image/jpeg" }),
+      "shirt.jpg",
+    );
+    form.append("age", "2 to 4 years old");
+    form.append("gender", "a realistic toddler");
+
+    const response = await fetch(`${baseUrl}/api/admin/media/generate`, {
+      method: "POST",
+      body: form,
+    });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      urls: ["https://pub-example.r2.dev/products/abc-generated-garment.png"],
+    });
+    expect(imageGeneration.generateGarmentImageFile).toHaveBeenCalledOnce();
     expect(r2.uploadProductImages).toHaveBeenCalledOnce();
   });
 });

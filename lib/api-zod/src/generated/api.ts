@@ -943,6 +943,37 @@ export const UploadAdminMediaResponse = zod.object({
 
 
 /**
+ * @summary Generate an on-model product image from a garment photo, upload it to R2, and return the public URL
+ */
+export const generateAdminMediaBodyAgeMax = 80;
+
+export const generateAdminMediaBodyGenderMax = 80;
+
+export const generateAdminMediaBodyBackgroundMax = 2000;
+
+export const generateAdminMediaBodyCustomPromptMax = 2000;
+
+
+
+export const GenerateAdminMediaBody = zod.object({
+  "garment": zod.instanceof(Blob),
+  "age": zod.string().max(generateAdminMediaBodyAgeMax).optional(),
+  "gender": zod.string().max(generateAdminMediaBodyGenderMax).optional(),
+  "background": zod.string().max(generateAdminMediaBodyBackgroundMax).optional(),
+  "customPrompt": zod.string().max(generateAdminMediaBodyCustomPromptMax).optional(),
+  "aspectRatio": zod.enum(['1:1', '4:5', '3:4', '16:9']).optional()
+})
+
+export const generateAdminMediaResponseUrlsMax = 20;
+
+
+
+export const GenerateAdminMediaResponse = zod.object({
+  "urls": zod.array(zod.string().url()).min(1).max(generateAdminMediaResponseUrlsMax)
+})
+
+
+/**
  * @summary List products for staff commerce ops
  */
 export const listAdminProductsQueryCursorMax = 512;

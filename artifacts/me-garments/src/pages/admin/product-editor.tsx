@@ -7,6 +7,7 @@ import {
   useCreateAdminProduct,
   useDeleteAdminProduct,
   useGetAdminProduct,
+  useGenerateAdminMedia,
   useUpdateAdminProduct,
   useUploadAdminMedia,
   type AdminProductCreateInputStatus,
@@ -14,6 +15,7 @@ import {
 import { AlertTriangle, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Card,
   CardContent,
@@ -136,6 +138,20 @@ function apiErrorMessage(error: unknown): string {
   return "Request rejected";
 }
 
+function generationAgeLabel(age: AgeOption): string {
+  if (age === "toddler") return "2 to 4 years old";
+  if (age === "kids") return "5 to 8 years old";
+  if (age === "both") return "2 to 8 years old";
+  return "";
+}
+
+function generationGenderLabel(gender: GenderOption): string {
+  if (gender === "boys") return "a realistic boy";
+  if (gender === "girls") return "a realistic girl";
+  if (gender === "both") return "a realistic child";
+  return "";
+}
+
 function mergeImageUrls(existing: string[], nextUrls: string[]): string[] {
   const merged = [...existing];
   for (const url of nextUrls) {
@@ -176,6 +192,7 @@ export default function AdminProductEditorPage() {
   const updateMutation = useUpdateAdminProduct();
   const deleteMutation = useDeleteAdminProduct();
   const uploadMedia = useUploadAdminMedia();
+  const generateMedia = useGenerateAdminMedia();
 
   const [title, setTitle] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState("");
@@ -187,6 +204,8 @@ export default function AdminProductEditorPage() {
   const [tags, setTags] = useState("");
   const [optionName, setOptionName] = useState("Size");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [generatePrompt, setGeneratePrompt] = useState("");
+  const [generateFile, setGenerateFile] = useState<File | null>(null);
   const [variants, setVariants] = useState<VariantDraft[]>([{ ...EMPTY_VARIANT }]);
 
   const resetCreateForm = () => {
@@ -200,6 +219,8 @@ export default function AdminProductEditorPage() {
     setTags("");
     setOptionName("Size");
     setImageUrls([]);
+    setGeneratePrompt("");
+    setGenerateFile(null);
     setVariants([{ ...EMPTY_VARIANT }]);
   };
 
@@ -230,6 +251,7 @@ export default function AdminProductEditorPage() {
   const saving =
     createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
   const uploading = uploadMedia.isPending;
+  const generating = generateMedia.isPending;
   const canSave = Boolean(title.trim()) && Boolean(gender) && Boolean(age);
 
   const handleImageFiles = (fileList: FileList | null) => {
@@ -258,6 +280,53 @@ export default function AdminProductEditorPage() {
 
   const removeImageUrl = (urlToRemove: string) => {
     setImageUrls((prev) => prev.filter((url) => url !== urlToRemove));
+  };
+
+  const handleGenerateImage = () => {
+    if (!generateFile) {
+      toast({
+        title: "Garment image required",
+        description: "Choose a JPEG or PNG garment photo to generate from.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!gender || !age) {
+      toast({
+        title: "Collection and age required",
+        description: "Choose Boy/Girl and Toddler/Kids so the generated model matches the product.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    generateMedia.mutate(
+      {
+        data: {
+          garment: generateFile,
+          age: generationAgeLabel(age),
+          gender: generationGenderLabel(gender),
+          customPrompt: generatePrompt.trim() || undefined,
+        },
+      },
+      {
+        onSuccess: (result) => {
+          setImageUrls((prev) => mergeImageUrls(prev, result.urls));
+          setGenerateFile(null);
+          toast({
+            title: "On-model image generated",
+            description: "Save the product to attach this image.",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Could not generate image",
+            description: apiErrorMessage(error),
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   const save = () => {
@@ -511,6 +580,78 @@ export default function AdminProductEditorPage() {
                 </p>
                 {uploading && (
                   <p className="text-xs text-muted-foreground">Uploading images…</p>
+                )}
+              </div>
+              <div className="space-y-2 rounded-md border border-dashed p-3">
+                <Label htmlFor="generate-garment">Generate on-model photo (optional)</Label>
+                <Input
+                  id="generate-garment"
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  disabled={generating}
+                  onChange={(e) => {
+                    setGenerateFile(e.target.files?.[0] ?? null);
+                    e.target.value = "";
+                  }}
+                />
+                <Textarea
+                  id="generate-prompt"
+                  value={generatePrompt}
+                  onChange={(e) => setGeneratePrompt(e.target.value)}
+                  disabled={generating}
+                  placeholder="Optional extra instructions (pose, studio, lighting). The original garment will be preserved."
+                  className="min-h-20"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={generating || !generateFile}
+                  >
+                    {generating ? (
+                      <>
+                        <Spinner className="mr-2" />
+                        Generating…
+                      </>
+                    ) : (
+                      "Generate on-model photo"
+                    )}
+                  </Button>
+                  {generateFile && !generating && (
+                    <p className="text-xs text-muted-foreground">
+                      Ready: {generateFile.name}
+                    </p>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Uses the collection and age selected above. Generation is optional — you can
+                  still upload product photos if it fails or is unavailable.
+                </p>
+                {generating && (
+                  <Alert>
+                    <Spinner className="h-4 w-4" />
+                    <AlertTitle>Generating image</AlertTitle>
+                    <AlertDescription>
+                      Creating an on-model photo. This can take up to a minute. You can still
+                      upload images normally while you wait.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {generateMedia.isError && !generating && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Generation failed</AlertTitle>
+                    <AlertDescription>
+                      {apiErrorMessage(generateMedia.error)} You can upload a product photo
+                      instead.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {generateMedia.isSuccess && !generating && (
+                  <p className="text-xs text-muted-foreground">
+                    Generated image added below. Save the product to keep it.
+                  </p>
                 )}
               </div>
               {imageUrls.length > 0 && (

@@ -54,3 +54,11 @@ artifacts/api-server/.env
 # caches
 .cache/
 .local/
+
+# Image generation module (local secrets, venv, generated files)
+Image_Generation_Module/.env
+Image_Generation_Module/venv/
+Image_Generation_Module/.venv/
+Image_Generation_Module/__pycache__/
+Image_Generation_Module/**/__pycache__/
+Image_Generation_Module/output/

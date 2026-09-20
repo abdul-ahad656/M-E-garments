@@ -13,6 +13,8 @@ export * from './adminFulfillmentOrderLineItemsItem';
 export * from './adminInventoryAdjustInput';
 export * from './adminInventoryItem';
 export * from './adminInventoryList';
+export * from './adminMediaGenerateInput';
+export * from './adminMediaGenerateInputAspectRatio';
 export * from './adminMediaUploadInput';
 export * from './adminMediaUploadResult';
 export * from './adminOrderCancelInput';
