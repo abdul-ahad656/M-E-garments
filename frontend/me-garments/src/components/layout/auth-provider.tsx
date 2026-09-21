@@ -28,10 +28,10 @@ function stripBase(path: string): string {
 const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
-  options: {
-    logoPlacement: "inside" as const,
+  layout: {
+    // Site brand is the text "M&E" in the page header — hide Clerk's image logo.
+    logoPlacement: "none" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
     colorPrimary: "hsl(350 96% 43%)",

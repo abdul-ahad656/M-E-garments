@@ -1,6 +1,8 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Router, useLocation, useRouter } from "wouter";
+import { Navbar } from "./navbar";
+import { Footer } from "./footer";
 
 type Phase = "idle" | "covering" | "revealing";
 
@@ -13,8 +15,32 @@ function isAdminPath(path: string) {
   return path === "/admin" || path.startsWith("/admin/");
 }
 
+function isAuthPath(path: string) {
+  return (
+    path === "/login" ||
+    path.startsWith("/login/") ||
+    path === "/sign-in" ||
+    path.startsWith("/sign-in/") ||
+    path === "/sign-up" ||
+    path.startsWith("/sign-up/")
+  );
+}
+
 function shouldSkipCurtain(from: string, to: string) {
   return isAdminPath(from) || isAdminPath(to);
+}
+
+function ShellChrome({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  const authRoute = isAuthPath(location);
+
+  return (
+    <>
+      <Navbar />
+      <main className="flex flex-1 flex-col">{children}</main>
+      {!authRoute && <Footer />}
+    </>
+  );
 }
 
 export function PageTransition({ children }: { children: ReactNode }) {
@@ -121,19 +147,21 @@ export function PageTransition({ children }: { children: ReactNode }) {
       </motion.div>
 
       <Router hook={frozenHook} hrefs={formatHref}>
-        <motion.div
-          key={displayedLocation}
-          className="flex flex-1 flex-col"
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.8,
-            delay: prefersReducedMotion || phase === "idle" ? 0 : 0.35,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
-          {children}
-        </motion.div>
+        <ShellChrome>
+          <motion.div
+            key={displayedLocation}
+            className="flex flex-1 flex-col"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.8,
+              delay: prefersReducedMotion || phase === "idle" ? 0 : 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {children}
+          </motion.div>
+        </ShellChrome>
       </Router>
     </>
   );

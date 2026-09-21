@@ -1,19 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SignIn, SignUp, useSignUp } from "@clerk/react";
-import { Link, useSearch } from "wouter";
+import { useSearch } from "wouter";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search, ShoppingBag } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-const NAV_LINKS: { href: string; label: string; accent?: boolean }[] = [
-  { href: "/new-arrivals", label: "New" },
-  { href: "/best-sellers", label: "Best Sellers" },
-  { href: "/boys", label: "Boys" },
-  { href: "/girls", label: "Girls" },
-  { href: "/sale", label: "Sale", accent: true },
-];
 
 const LOGIN_THOUGHTS = [
   "Welcome back!",
@@ -33,65 +24,6 @@ function sanitizeRedirectUrl(url: string | null): string {
   if (!url) return `${basePath}/account`;
   if (url.startsWith("/") && !url.startsWith("//")) return url;
   return `${basePath}/account`;
-}
-
-function AuthHeader() {
-  return (
-    <header className="w-full border-b border-black/5 bg-white">
-      <div className="flex items-center justify-between px-6 py-4 lg:px-16">
-        <Link href="/" className="flex shrink-0 items-center">
-          <img
-            src={`${basePath}/logo.svg`}
-            alt="M&E"
-            className="h-8 w-auto object-contain"
-          />
-        </Link>
-
-        <nav className="hidden flex-1 items-center justify-center space-x-8 md:flex">
-          {NAV_LINKS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                item.accent ? "text-primary" : "text-foreground"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-          <Link
-            href="/search"
-            className="p-2 text-foreground transition-colors hover:text-primary"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/cart"
-            className="p-2 text-foreground transition-colors hover:text-primary"
-            aria-label="Cart"
-          >
-            <ShoppingBag className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/login"
-            className="hidden rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:inline-flex"
-          >
-            Login
-          </Link>
-          <Link
-            href="/sign-up"
-            className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Sign up
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
 }
 
 function SwitchingThoughtBubble({ lines }: { lines: string[] }) {
@@ -180,15 +112,17 @@ function MascotPanel({
   src,
   alt,
   captions,
+  shiftUp = 0,
 }: {
   src: string;
   alt: string;
   captions: string[];
+  shiftUp?: number;
 }) {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="relative hidden min-h-[calc(100dvh-4.5rem)] flex-col items-center justify-center gap-4 overflow-hidden bg-white px-6 lg:flex">
+    <div className="relative hidden min-h-[calc(100dvh-4rem)] flex-col items-center justify-center gap-4 overflow-hidden bg-white px-6 lg:flex">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,hsl(var(--primary)/0.06),transparent_55%)]"
@@ -198,6 +132,7 @@ function MascotPanel({
         src={src}
         alt={alt}
         className="relative z-0 max-h-[52%] max-w-[48%] object-contain object-center"
+        style={shiftUp ? { marginTop: -shiftUp } : undefined}
         animate={reduceMotion ? undefined : { y: [0, 8, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -207,7 +142,7 @@ function MascotPanel({
 
 function FormPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-[calc(100dvh-4.5rem)] items-center justify-center bg-white px-6 py-10 sm:px-10 lg:px-16">
+    <div className="flex min-h-[calc(100dvh-4rem)] items-start justify-center bg-white px-6 pb-10 pt-40 sm:px-10 lg:px-16 lg:pt-45">
       <div className="w-full max-w-md">{children}</div>
     </div>
   );
@@ -219,34 +154,38 @@ function AuthSplitShell({
   mascotAlt,
   mascotCaptions,
   mascotSide = "left",
+  mascotShiftUp = 0,
 }: {
   children: ReactNode;
   mascotSrc: string;
   mascotAlt: string;
   mascotCaptions: string[];
   mascotSide?: "left" | "right";
+  mascotShiftUp?: number;
 }) {
   const mascot = (
-    <MascotPanel src={mascotSrc} alt={mascotAlt} captions={mascotCaptions} />
+    <MascotPanel
+      src={mascotSrc}
+      alt={mascotAlt}
+      captions={mascotCaptions}
+      shiftUp={mascotShiftUp}
+    />
   );
   const form = <FormPanel>{children}</FormPanel>;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white">
-      <AuthHeader />
-      <div className="grid flex-1 lg:grid-cols-2">
-        {mascotSide === "left" ? (
-          <>
-            {mascot}
-            {form}
-          </>
-        ) : (
-          <>
-            {form}
-            {mascot}
-          </>
-        )}
-      </div>
+    <div className="grid flex-1 bg-white lg:grid-cols-2">
+      {mascotSide === "left" ? (
+        <>
+          {mascot}
+          {form}
+        </>
+      ) : (
+        <>
+          {form}
+          {mascot}
+        </>
+      )}
     </div>
   );
 }
@@ -262,6 +201,7 @@ export function LoginPage() {
       mascotAlt="M&E boy mascot"
       mascotCaptions={LOGIN_THOUGHTS}
       mascotSide="left"
+      mascotShiftUp={36}
     >
       <SignIn
         routing="path"
@@ -284,6 +224,7 @@ export function SignInPage() {
       mascotAlt="M&E boy mascot"
       mascotCaptions={LOGIN_THOUGHTS}
       mascotSide="left"
+      mascotShiftUp={36}
     >
       <SignIn
         routing="path"
