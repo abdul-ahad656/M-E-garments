@@ -16,7 +16,6 @@ AI-assisted premium kidswear storefront with Supabase as the commerce source of 
 
 ```bash
 npm install
-cp .env.example .env
 # fill in Supabase, Clerk, OpenAI, R2, and STORE_CURRENCY (default PKR)
 ```
 
