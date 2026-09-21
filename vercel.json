@@ -1,12 +1,8 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "npm run build -w @workspace/me-garments",
-  "outputDirectory": "frontend/me-garments/dist/public",
-  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ]
 }
