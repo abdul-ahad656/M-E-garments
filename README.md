@@ -46,7 +46,8 @@ In production:
 - Set `VITE_API_BASE_URL` to the public API origin on the frontend host (e.g. Vercel).
 - Set `FRONTEND_URL` to the public storefront origin on the API host (restricts CORS when set).
 - Allow both URLs in the Clerk dashboard (origins / redirects).
-- On Vercel, use an SPA fallback rewrite only (`/(.*)` → `/index.html`); do not hardcode an `/api` proxy rewrite.
+- On Vercel, root `vercel.json` sets the build output to `frontend/me-garments/dist/public` and an SPA fallback rewrite only (`/(.*)` → `/index.html`); do not hardcode an `/api` proxy rewrite.
+- Set Vercel env: `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_API_BASE_URL` (public API origin, no trailing slash).
 
 ## Useful scripts
 
