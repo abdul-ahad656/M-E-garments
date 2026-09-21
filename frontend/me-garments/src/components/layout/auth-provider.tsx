@@ -7,22 +7,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { trackEvent } from "@/lib/analytics";
 
-const clerkEnvKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
-  | string
-  | undefined;
+const clerkEnvKey = (
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
+)?.trim();
 
-// Without an env key, publishableKeyFromHost("localhost") invents clerk.localhost
-// and Clerk JS fails with ERR_CONNECTION_REFUSED.
-if (!clerkEnvKey) {
-  throw new Error(
-    "Missing VITE_CLERK_PUBLISHABLE_KEY in the repo root .env file",
-  );
-}
-
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  clerkEnvKey,
-);
+// Without an env key, publishableKeyFromHost invents an invalid host key and
+// the app fails to boot (blank page in production).
+const clerkPubKey = clerkEnvKey
+  ? publishableKeyFromHost(window.location.hostname, clerkEnvKey)
+  : "";
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -199,6 +192,21 @@ function ClerkApiAuthBridge() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
+
+  if (!clerkPubKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center">
+        <div className="max-w-md space-y-3">
+          <h1 className="text-xl font-semibold">Missing Clerk configuration</h1>
+          <p className="text-sm text-muted-foreground">
+            Set <code className="text-foreground">VITE_CLERK_PUBLISHABLE_KEY</code> in
+            the Vercel project environment variables, then redeploy. Vite embeds this
+            value at build time.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ClerkProvider

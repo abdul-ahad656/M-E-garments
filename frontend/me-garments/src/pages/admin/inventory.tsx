@@ -5,9 +5,11 @@ import {
   getListAdminInventoryQueryKey,
   useAdjustAdminInventory,
   useListAdminInventory,
+  type AdminInventoryItem,
 } from "@workspace/api-client-react";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +20,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import {
+  isLowStock,
+  LOW_STOCK_THRESHOLD,
+  lowStockLabel,
+} from "@/lib/inventory-alerts";
+import { cn } from "@/lib/utils";
 import { AdminLayout } from "./layout";
 
 function apiErrorMessage(error: unknown): string {
@@ -56,7 +64,10 @@ export default function AdminInventoryPage() {
   );
   const adjust = useAdjustAdminInventory();
 
-  const applyDelta = (inventoryItemId: string) => {
+  const items = inventory.data?.items ?? [];
+  const lowStockItems = items.filter((item) => isLowStock(item.available));
+
+  const applyDelta = (inventoryItemId: string, currentAvailable: number) => {
     const delta = Number(deltas[inventoryItemId] ?? "0");
     if (!Number.isFinite(delta) || delta === 0) {
       toast({ title: "Enter a non-zero delta", variant: "destructive" });
@@ -65,12 +76,32 @@ export default function AdminInventoryPage() {
     adjust.mutate(
       { data: { inventoryItemId, delta } },
       {
-        onSuccess: async () => {
+        onSuccess: async (updated: AdminInventoryItem) => {
           await queryClient.invalidateQueries({
             queryKey: getListAdminInventoryQueryKey(),
           });
           setDeltas((current) => ({ ...current, [inventoryItemId]: "" }));
-          toast({ title: "Inventory updated" });
+
+          if (isLowStock(updated.available)) {
+            toast({
+              title:
+                updated.available <= 0
+                  ? "Out of stock"
+                  : `Low stock alert (≤${LOW_STOCK_THRESHOLD})`,
+              description: `${updated.productTitle} · ${updated.variantTitle} now has ${updated.available} left.`,
+              variant: "destructive",
+            });
+          } else if (
+            isLowStock(currentAvailable) &&
+            !isLowStock(updated.available)
+          ) {
+            toast({
+              title: "Inventory updated",
+              description: "Stock is back above the low-stock threshold.",
+            });
+          } else {
+            toast({ title: "Inventory updated" });
+          }
         },
         onError: (error) => {
           toast({
@@ -122,10 +153,39 @@ export default function AdminInventoryPage() {
           </Alert>
         )}
 
+        {lowStockItems.length > 0 && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              Low stock alert — {lowStockItems.length} variant
+              {lowStockItems.length === 1 ? "" : "s"} at or below{" "}
+              {LOW_STOCK_THRESHOLD}
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {lowStockItems.slice(0, 8).map((item) => (
+                  <li key={item.inventoryItemId}>
+                    {item.productTitle} · {item.variantTitle} —{" "}
+                    <strong>{item.available}</strong> left
+                  </li>
+                ))}
+              </ul>
+              {lowStockItems.length > 8 && (
+                <p className="mt-2">
+                  And {lowStockItems.length - 8} more on this page.
+                </p>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Variants</CardTitle>
-            <CardDescription>Available quantity and delta adjustments</CardDescription>
+            <CardDescription>
+              Available quantity and delta adjustments. Items at or below{" "}
+              {LOW_STOCK_THRESHOLD} are flagged.
+            </CardDescription>
           </CardHeader>
           <CardContent className="divide-y">
             {inventory.isPending && (
@@ -134,42 +194,62 @@ export default function AdminInventoryPage() {
             {inventory.data?.items.length === 0 && (
               <p className="py-6 text-sm text-muted-foreground">No inventory rows matched.</p>
             )}
-            {inventory.data?.items.map((item) => (
-              <div
-                key={item.inventoryItemId}
-                className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-medium">
-                    {item.productTitle} · {item.variantTitle}
+            {items.map((item) => {
+              const low = isLowStock(item.available);
+              return (
+                <div
+                  key={item.inventoryItemId}
+                  className={cn(
+                    "flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between",
+                    low && "rounded-md bg-destructive/5 px-2 -mx-2 sm:px-3",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="truncate font-medium">
+                        {item.productTitle} · {item.variantTitle}
+                      </div>
+                      {low && (
+                        <Badge variant="destructive">
+                          {lowStockLabel(item.available)}
+                        </Badge>
+                      )}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-sm",
+                        low ? "font-medium text-destructive" : "text-muted-foreground",
+                      )}
+                    >
+                      {item.sku || "No product ID"} · available {item.available}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {item.sku || "No SKU"} · available {item.available}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      className="w-28"
+                      type="number"
+                      placeholder="Delta"
+                      value={deltas[item.inventoryItemId] ?? ""}
+                      onChange={(event) =>
+                        setDeltas((current) => ({
+                          ...current,
+                          [item.inventoryItemId]: event.target.value,
+                        }))
+                      }
+                    />
+                    <Button
+                      size="sm"
+                      disabled={adjust.isPending}
+                      onClick={() =>
+                        applyDelta(item.inventoryItemId, item.available)
+                      }
+                    >
+                      Apply
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Input
-                    className="w-28"
-                    type="number"
-                    placeholder="Delta"
-                    value={deltas[item.inventoryItemId] ?? ""}
-                    onChange={(event) =>
-                      setDeltas((current) => ({
-                        ...current,
-                        [item.inventoryItemId]: event.target.value,
-                      }))
-                    }
-                  />
-                  <Button
-                    size="sm"
-                    disabled={adjust.isPending}
-                    onClick={() => applyDelta(item.inventoryItemId)}
-                  >
-                    Apply
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 

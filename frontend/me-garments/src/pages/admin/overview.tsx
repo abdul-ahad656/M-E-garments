@@ -2,10 +2,13 @@ import { useUser } from "@clerk/react";
 import {
   getGetAdminAnalyticsQueryKey,
   getGetAdminCatalogHealthQueryKey,
+  getListAdminInventoryQueryKey,
   useGetAdminAnalytics,
   useGetAdminCatalogHealth,
+  useListAdminInventory,
 } from "@workspace/api-client-react";
 import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Link } from "wouter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +19,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  isLowStock,
+  LOW_STOCK_THRESHOLD,
+} from "@/lib/inventory-alerts";
 import { AdminLayout, MetricCard } from "./layout";
 
 export default function AdminOverviewPage() {
@@ -34,10 +41,52 @@ export default function AdminOverviewPage() {
       staleTime: 30_000,
     },
   });
+  const inventory = useListAdminInventory(
+    {},
+    {
+      query: {
+        queryKey: [...getListAdminInventoryQueryKey({}), user?.id ?? "signed-out"],
+        enabled: Boolean(user?.id),
+        staleTime: 30_000,
+      },
+    },
+  );
+
+  const lowStockItems =
+    inventory.data?.items.filter((item) => isLowStock(item.available)) ?? [];
 
   return (
     <AdminLayout>
       <div className="space-y-8">
+        {lowStockItems.length > 0 && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              Low stock alert — {lowStockItems.length} variant
+              {lowStockItems.length === 1 ? "" : "s"} at or below{" "}
+              {LOW_STOCK_THRESHOLD}
+            </AlertTitle>
+            <AlertDescription className="space-y-2">
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {lowStockItems.slice(0, 5).map((item) => (
+                  <li key={item.inventoryItemId}>
+                    {item.productTitle} · {item.variantTitle} — {item.available}{" "}
+                    left
+                  </li>
+                ))}
+              </ul>
+              <p>
+                <Link href="/admin/inventory" className="font-medium underline underline-offset-2">
+                  Review inventory
+                </Link>
+                {inventory.data?.pageInfo.hasNextPage
+                  ? " (showing the first page of variants)."
+                  : "."}
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>

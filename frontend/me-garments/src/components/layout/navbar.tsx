@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser } from "@clerk/react";
-import { Search, ShoppingBag, User, Menu, ShieldCheck } from "lucide-react";
+import { ShoppingBag, User, Menu, ShieldCheck } from "lucide-react";
 import {
   getGetAdminSessionQueryKey,
   useGetAdminSession,
@@ -15,6 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { canRenderAdminWorkspace } from "@/lib/admin-access";
+import { NavSearch } from "./nav-search";
 
 const NAV_LINKS: { href: string; label: string; accent?: boolean }[] = [
   { href: "/new-arrivals", label: "New" },
@@ -81,11 +82,11 @@ export function Navbar() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/sign-up" onClick={() => setOpen(false)} className="text-base font-medium">
-                      Sign in
-                    </Link>
                     <Link href="/login" onClick={() => setOpen(false)} className="text-base font-medium">
                       Login
+                    </Link>
+                    <Link href="/sign-up" onClick={() => setOpen(false)} className="text-base font-medium">
+                      Sign up
                     </Link>
                   </>
                 )}
@@ -125,9 +126,10 @@ export function Navbar() {
               Admin
             </Link>
           )}
-          <Link href="/search" className="p-2 text-foreground transition-colors hover:text-primary">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Search</span>
+          <NavSearch />
+          <Link href="/cart" className="relative p-2 text-foreground transition-colors hover:text-primary">
+            <ShoppingBag className="h-5 w-5" />
+            <span className="sr-only">Cart</span>
           </Link>
           {isSignedIn ? (
             <Link
@@ -140,23 +142,19 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
-                href="/sign-up"
-                className="inline-flex h-8 w-[5.5rem] items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:h-9 sm:w-[6.25rem] sm:text-sm"
-              >
-                Sign in
-              </Link>
-              <Link
                 href="/login"
                 className="inline-flex h-8 w-[5.5rem] items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:h-9 sm:w-[6.25rem] sm:text-sm"
               >
                 Login
               </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex h-8 w-[5.5rem] items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:h-9 sm:w-[6.25rem] sm:text-sm"
+              >
+                Sign up
+              </Link>
             </div>
           )}
-          <Link href="/cart" className="relative p-2 text-foreground transition-colors hover:text-primary">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="sr-only">Cart</span>
-          </Link>
         </div>
       </div>
     </header>

@@ -371,6 +371,27 @@ export async function getProductByHandle(
   return mapProductDetail(product, variants, images, options);
 }
 
+/** Expand search tokens so "boy" hits "boys", "summer" hits seasonal copy, etc. */
+const SEARCH_SYNONYMS: Record<string, string[]> = {
+  boy: ["boy", "boys"],
+  boys: ["boy", "boys"],
+  girl: ["girl", "girls"],
+  girls: ["girl", "girls"],
+  toddler: ["toddler", "toddlers", "baby", "infant"],
+  kids: ["kids", "kid", "children", "child"],
+  party: ["party", "partywear", "festive"],
+  summer: ["summer", "summery"],
+  winter: ["winter", "woolen", "woollen"],
+  spring: ["spring"],
+  autumn: ["autumn", "fall"],
+  fall: ["fall", "autumn"],
+};
+
+function termMatchesHaystack(haystack: string, term: string): boolean {
+  const variants = SEARCH_SYNONYMS[term] ?? [term];
+  return variants.some((variant) => haystack.includes(variant));
+}
+
 export async function searchProducts(
   terms: string[],
   limit = 20,
@@ -389,7 +410,7 @@ export async function searchProducts(
         ]
           .join(" ")
           .toLowerCase();
-        return normalized.every((term) => haystack.includes(term));
+        return normalized.every((term) => termMatchesHaystack(haystack, term));
       })
     : products;
   const sliced = filtered.slice(0, limit);

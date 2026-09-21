@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { isLowStock, LOW_STOCK_THRESHOLD } from "@/lib/inventory-alerts";
 import { AdminLayout } from "./layout";
 
 type VariantDraft = {
@@ -37,19 +38,45 @@ type VariantDraft = {
   compareAtPrice: string;
   sku: string;
   quantity: string;
-  useCustomSize?: boolean;
 };
 
 /** Storefront category pages match these product tags. */
 type GenderOption = "" | "boys" | "girls" | "both";
 type AgeOption = "" | "toddler" | "kids" | "both";
+type SeasonOption = "" | "summer" | "winter" | "spring" | "autumn" | "year-round";
 
 const GENDER_TAGS = new Set(["boys", "girls"]);
 const AGE_TAGS = new Set(["toddler", "kids"]);
 const OCCASION_TAGS = new Set(["party", "partywear"]);
 const MERCH_TAGS = new Set(["best_seller", "sale"]);
+const SEASON_TAGS = new Set(["summer", "winter", "spring", "autumn", "year-round"]);
 
-const SIZE_PRESETS = [
+const PRODUCT_TYPE_OPTIONS = [
+  "Tops",
+  "Bottoms",
+  "Dresses",
+  "Sets",
+  "Shirts",
+  "Pants",
+  "Kurtas",
+  "Frocks",
+  "Outerwear",
+  "Ethnic",
+  "Sleepwear",
+  "Accessories",
+] as const;
+
+const OTHER_TAG_OPTIONS = [
+  "new",
+  "limited",
+  "featured",
+  "exclusive",
+  "organic",
+  "cotton",
+  "linen",
+] as const;
+
+const SIZE_OPTIONS = [
   "XS",
   "Small",
   "Medium",
@@ -61,6 +88,9 @@ const SIZE_PRESETS = [
   "8Y",
 ] as const;
 
+const selectClassName =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+
 function normalizeTag(tag: string): string {
   return tag.trim().toLowerCase();
 }
@@ -71,7 +101,8 @@ function isManagedTag(tag: string): boolean {
     GENDER_TAGS.has(normalized) ||
     AGE_TAGS.has(normalized) ||
     OCCASION_TAGS.has(normalized) ||
-    MERCH_TAGS.has(normalized)
+    MERCH_TAGS.has(normalized) ||
+    SEASON_TAGS.has(normalized)
   );
 }
 
@@ -147,6 +178,16 @@ function ageFromTags(tags: string[]): AgeOption {
   return "";
 }
 
+function seasonFromTags(tags: string[]): SeasonOption {
+  const normalized = tags.map(normalizeTag);
+  if (normalized.includes("year-round")) return "year-round";
+  if (normalized.includes("summer")) return "summer";
+  if (normalized.includes("winter")) return "winter";
+  if (normalized.includes("spring")) return "spring";
+  if (normalized.includes("autumn")) return "autumn";
+  return "";
+}
+
 function isPartywearFromTags(tags: string[]): boolean {
   return tags.some((tag) => OCCASION_TAGS.has(normalizeTag(tag)));
 }
@@ -159,6 +200,7 @@ function applyCategoryTags(
   freeformTags: string[],
   gender: GenderOption,
   age: AgeOption,
+  season: SeasonOption,
   partywear: boolean,
   bestSeller: boolean,
   onSale: boolean,
@@ -173,19 +215,17 @@ function applyCategoryTags(
   if (age === "kids") tags.push("kids");
   if (age === "both") tags.push("toddler", "kids");
 
+  if (season === "summer") tags.push("summer");
+  if (season === "winter") tags.push("winter");
+  if (season === "spring") tags.push("spring");
+  if (season === "autumn") tags.push("autumn");
+  if (season === "year-round") tags.push("year-round");
+
   if (partywear) tags.push("party");
   if (bestSeller) tags.push("best_seller");
   if (onSale) tags.push("sale");
 
   return tags;
-}
-
-function sizeSelectValue(variant: VariantDraft): string {
-  if (variant.useCustomSize) return "__custom__";
-  if (!variant.optionValue) return "";
-  return SIZE_PRESETS.includes(variant.optionValue as (typeof SIZE_PRESETS)[number])
-    ? variant.optionValue
-    : "__custom__";
 }
 
 function apiErrorMessage(error: unknown): string {
@@ -263,13 +303,14 @@ export default function AdminProductEditorPage() {
   const [productType, setProductType] = useState("");
   const [gender, setGender] = useState<GenderOption>("");
   const [age, setAge] = useState<AgeOption>("");
+  const [season, setSeason] = useState<SeasonOption>("");
   const [partywear, setPartywear] = useState(false);
   const [bestSeller, setBestSeller] = useState(false);
   const [onSale, setOnSale] = useState(false);
   const [salePercent, setSalePercent] = useState("");
-  const [tags, setTags] = useState("");
-  const [optionName, setOptionName] = useState("Size");
+  const [otherTags, setOtherTags] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [productImageNames, setProductImageNames] = useState("");
   const [generatePrompt, setGeneratePrompt] = useState("");
   const [generateFile, setGenerateFile] = useState<File | null>(null);
   const [variants, setVariants] = useState<VariantDraft[]>([{ ...EMPTY_VARIANT }]);
@@ -281,13 +322,14 @@ export default function AdminProductEditorPage() {
     setProductType("");
     setGender("");
     setAge("");
+    setSeason("");
     setPartywear(false);
     setBestSeller(false);
     setOnSale(false);
     setSalePercent("");
-    setTags("");
-    setOptionName("Size");
+    setOtherTags([]);
     setImageUrls([]);
+    setProductImageNames("");
     setGeneratePrompt("");
     setGenerateFile(null);
     setVariants([{ ...EMPTY_VARIANT }]);
@@ -301,6 +343,7 @@ export default function AdminProductEditorPage() {
     setProductType(existing.data.productType);
     setGender(genderFromTags(existing.data.tags));
     setAge(ageFromTags(existing.data.tags));
+    setSeason(seasonFromTags(existing.data.tags));
     setPartywear(isPartywearFromTags(existing.data.tags));
     setBestSeller(hasMerchTag(existing.data.tags, "best_seller"));
     const mappedVariants = existing.data.variants.map((variant) => ({
@@ -315,8 +358,11 @@ export default function AdminProductEditorPage() {
     const saleTagged = hasMerchTag(existing.data.tags, "sale");
     setOnSale(saleTagged || Boolean(derivedPercent));
     setSalePercent(derivedPercent);
-    setTags(existing.data.tags.filter((tag) => !isManagedTag(tag)).join(", "));
-    setOptionName(existing.data.options[0]?.name ?? "Size");
+    setOtherTags(
+      existing.data.tags
+        .filter((tag) => !isManagedTag(tag))
+        .map((tag) => normalizeTag(tag)),
+    );
     setImageUrls(existing.data.images.map((image) => image.url));
     setVariants(mappedVariants);
   }, [existing.data]);
@@ -330,6 +376,7 @@ export default function AdminProductEditorPage() {
   const handleImageFiles = (fileList: FileList | null) => {
     if (!fileList?.length) return;
     const files = Array.from(fileList);
+    setProductImageNames(files.map((file) => file.name).join(", "));
     uploadMedia.mutate(
       { data: { files } },
       {
@@ -421,12 +468,10 @@ export default function AdminProductEditorPage() {
     }
 
     const parsedTags = applyCategoryTags(
-      tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
+      otherTags,
       gender,
       age,
+      season,
       partywear,
       bestSeller,
       onSale,
@@ -448,6 +493,21 @@ export default function AdminProductEditorPage() {
       ? applySalePercentToVariants(variants, Number.parseFloat(salePercent))
       : variants;
 
+    const lowStockVariants = saleAppliedVariants.filter((variant) =>
+      isLowStock(parseQuantity(variant.quantity)),
+    );
+
+    const notifyLowStockIfNeeded = () => {
+      if (lowStockVariants.length === 0) return;
+      toast({
+        title: `Low stock alert (≤${LOW_STOCK_THRESHOLD})`,
+        description: `${lowStockVariants.length} size variant${
+          lowStockVariants.length === 1 ? "" : "s"
+        } at or below ${LOW_STOCK_THRESHOLD} units.`,
+        variant: "destructive",
+      });
+    };
+
     if (isNew) {
       createMutation.mutate(
         {
@@ -457,7 +517,7 @@ export default function AdminProductEditorPage() {
             status,
             productType,
             tags: parsedTags,
-            optionName,
+            optionName: "Size",
             imageUrls,
             variants: saleAppliedVariants.map((variant) => ({
               optionValues: [variant.optionValue],
@@ -475,6 +535,7 @@ export default function AdminProductEditorPage() {
               title: "Product created",
               description: "You can add another product now.",
             });
+            notifyLowStockIfNeeded();
             resetCreateForm();
           },
           onError: (error) => {
@@ -519,6 +580,7 @@ export default function AdminProductEditorPage() {
             }),
           ]);
           toast({ title: "Product saved" });
+          notifyLowStockIfNeeded();
         },
         onError: (error) => {
           toast({
@@ -562,20 +624,11 @@ export default function AdminProductEditorPage() {
               <Label htmlFor="title">Title</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="description">Description HTML</Label>
-              <Textarea
-                id="description"
-                className="min-h-28 font-mono"
-                value={descriptionHtml}
-                onChange={(e) => setDescriptionHtml(e.target.value)}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <select
                 id="status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={selectClassName}
                 value={status}
                 onChange={(e) => setStatus(e.target.value as AdminProductCreateInputStatus)}
               >
@@ -586,18 +639,31 @@ export default function AdminProductEditorPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="type">Product type</Label>
-              <Input
+              <select
                 id="type"
+                className={selectClassName}
                 value={productType}
                 onChange={(e) => setProductType(e.target.value)}
-                placeholder="e.g. Tops, Dresses"
-              />
+              >
+                <option value="" disabled>
+                  Select product type…
+                </option>
+                {PRODUCT_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+                {productType &&
+                  !PRODUCT_TYPE_OPTIONS.includes(
+                    productType as (typeof PRODUCT_TYPE_OPTIONS)[number],
+                  ) && <option value={productType}>{productType}</option>}
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Collection (Boy / Girl)</Label>
               <select
                 id="gender"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={selectClassName}
                 value={gender}
                 onChange={(e) => setGender(e.target.value as GenderOption)}
                 required
@@ -614,7 +680,7 @@ export default function AdminProductEditorPage() {
               <Label htmlFor="age">Age range</Label>
               <select
                 id="age"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={selectClassName}
                 value={age}
                 onChange={(e) => setAge(e.target.value as AgeOption)}
                 required
@@ -626,6 +692,25 @@ export default function AdminProductEditorPage() {
                 <option value="kids">Kids (4-8y)</option>
                 <option value="both">Both age ranges</option>
               </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="season">Season</Label>
+              <select
+                id="season"
+                className={selectClassName}
+                value={season}
+                onChange={(e) => setSeason(e.target.value as SeasonOption)}
+              >
+                <option value="">Select season…</option>
+                <option value="summer">Summer</option>
+                <option value="winter">Winter</option>
+                <option value="spring">Spring</option>
+                <option value="autumn">Autumn</option>
+                <option value="year-round">Year-round</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Helps shoppers find products by season in search.
+              </p>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="partywear" className="flex items-center gap-2 font-normal">
@@ -715,28 +800,84 @@ export default function AdminProductEditorPage() {
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="tags">Other tags (comma separated)</Label>
-              <Input
-                id="tags"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="e.g. new, limited"
-              />
+              <Label htmlFor="other-tags">Other tags</Label>
+              <select
+                id="other-tags"
+                className={selectClassName}
+                value=""
+                onChange={(e) => {
+                  const next = normalizeTag(e.target.value);
+                  if (!next) return;
+                  setOtherTags((prev) =>
+                    prev.includes(next) ? prev : [...prev, next],
+                  );
+                }}
+              >
+                <option value="">Add a tag…</option>
+                {OTHER_TAG_OPTIONS.filter((tag) => !otherTags.includes(tag)).map(
+                  (tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ),
+                )}
+                {otherTags
+                  .filter(
+                    (tag) =>
+                      !OTHER_TAG_OPTIONS.includes(
+                        tag as (typeof OTHER_TAG_OPTIONS)[number],
+                      ),
+                  )
+                  .map((tag) => (
+                    <option key={tag} value={tag} disabled>
+                      {tag} (selected)
+                    </option>
+                  ))}
+              </select>
+              {otherTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {otherTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-full border bg-secondary px-2.5 py-1 text-xs font-medium"
+                      onClick={() =>
+                        setOtherTags((prev) => prev.filter((t) => t !== tag))
+                      }
+                    >
+                      {tag}
+                      <X className="h-3 w-3" />
+                      <span className="sr-only">Remove {tag}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-3 md:col-span-2">
               <div className="space-y-2">
                 <Label htmlFor="image-files">Product images</Label>
-                <Input
-                  id="image-files"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  multiple
-                  disabled={uploading || saving}
-                  onChange={(e) => {
-                    handleImageFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" variant="outline" asChild>
+                    <label htmlFor="image-files" className="cursor-pointer">
+                      Choose files
+                    </label>
+                  </Button>
+                  <input
+                    id="image-files"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    className="sr-only"
+                    disabled={uploading || saving}
+                    onChange={(e) => {
+                      handleImageFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {productImageNames || "No file chosen"}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Select up to 20 JPEG, PNG, WebP, or GIF files (10MB each). Files upload to
                   Cloudflare R2 immediately; saving the product stores those URLs in Supabase.
@@ -747,16 +888,27 @@ export default function AdminProductEditorPage() {
               </div>
               <div className="space-y-2 rounded-md border border-dashed p-3">
                 <Label htmlFor="generate-garment">Generate on-model photo (optional)</Label>
-                <Input
-                  id="generate-garment"
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  disabled={generating}
-                  onChange={(e) => {
-                    setGenerateFile(e.target.files?.[0] ?? null);
-                    e.target.value = "";
-                  }}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" variant="outline" asChild>
+                    <label htmlFor="generate-garment" className="cursor-pointer">
+                      Choose file
+                    </label>
+                  </Button>
+                  <input
+                    id="generate-garment"
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="sr-only"
+                    disabled={generating}
+                    onChange={(e) => {
+                      setGenerateFile(e.target.files?.[0] ?? null);
+                      e.target.value = "";
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {generateFile?.name || "No file chosen"}
+                  </span>
+                </div>
                 <Textarea
                   id="generate-prompt"
                   value={generatePrompt}
@@ -781,11 +933,6 @@ export default function AdminProductEditorPage() {
                       "Generate on-model photo"
                     )}
                   </Button>
-                  {generateFile && !generating && (
-                    <p className="text-xs text-muted-foreground">
-                      Ready: {generateFile.name}
-                    </p>
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Uses the collection and age selected above. Generation is optional — you can
@@ -852,163 +999,123 @@ export default function AdminProductEditorPage() {
             <CardDescription>
               {isNew
                 ? "Choose size options, set prices, and enter stock quantity."
-                : "Update prices, SKUs, and stock quantity for existing variants."}
+                : "Update prices, product IDs, and stock quantity for existing variants."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isNew && (
-              <div className="space-y-2">
-                <Label htmlFor="option-name">Option name</Label>
-                <Input
-                  id="option-name"
-                  value={optionName}
-                  onChange={(e) => setOptionName(e.target.value)}
-                />
-              </div>
-            )}
-            {variants.map((variant, index) => {
-              const sizeValue = sizeSelectValue(variant);
-              const isCustomSize = sizeValue === "__custom__";
-              return (
-                <div
-                  key={variant.id ?? index}
-                  className="grid gap-3 rounded-lg border p-4 md:grid-cols-5"
-                >
-                  <div className="space-y-2">
-                    <Label>Size</Label>
-                    {isNew ? (
-                      <div className="space-y-2">
-                        <select
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          value={sizeValue}
-                          onChange={(e) => {
-                            const next = [...variants];
-                            const selected = e.target.value;
-                            if (selected === "__custom__") {
-                              next[index] = {
-                                ...variant,
-                                useCustomSize: true,
-                                optionValue: "",
-                              };
-                            } else {
-                              next[index] = {
-                                ...variant,
-                                useCustomSize: false,
-                                optionValue: selected,
-                              };
-                            }
-                            setVariants(next);
-                          }}
-                        >
-                          <option value="" disabled>
-                            Select size…
+            {variants.map((variant, index) => (
+              <div
+                key={variant.id ?? index}
+                className={`grid gap-3 rounded-lg border p-4 ${
+                  onSale ? "md:grid-cols-5" : "md:grid-cols-4"
+                }`}
+              >
+                <div className="space-y-2">
+                  <Label htmlFor={`size-${index}`}>Size</Label>
+                  {isNew ? (
+                    <select
+                      id={`size-${index}`}
+                      className={selectClassName}
+                      value={variant.optionValue}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[index] = {
+                          ...variant,
+                          optionValue: e.target.value,
+                        };
+                        setVariants(next);
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select size…
+                      </option>
+                      {SIZE_OPTIONS.map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
+                      {variant.optionValue &&
+                        !SIZE_OPTIONS.includes(
+                          variant.optionValue as (typeof SIZE_OPTIONS)[number],
+                        ) && (
+                          <option value={variant.optionValue}>
+                            {variant.optionValue}
                           </option>
-                          {SIZE_PRESETS.map((size) => (
-                            <option key={size} value={size}>
-                              {size}
-                            </option>
-                          ))}
-                          <option value="__custom__">Custom…</option>
-                        </select>
-                        {isCustomSize && (
-                          <Input
-                            value={variant.optionValue}
-                            placeholder="Custom size"
-                            onChange={(e) => {
-                              const next = [...variants];
-                              next[index] = {
-                                ...variant,
-                                useCustomSize: true,
-                                optionValue: e.target.value,
-                              };
-                              setVariants(next);
-                            }}
-                          />
                         )}
-                      </div>
-                    ) : (
-                      <Input value={variant.optionValue} disabled />
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{onSale ? "Original price" : "Price"}</Label>
-                    <Input
-                      value={onSale ? variant.compareAtPrice || variant.price : variant.price}
-                      onChange={(e) => {
-                        const next = [...variants];
-                        if (onSale) {
-                          const original = parseMoney(e.target.value);
-                          const percent = Number.parseFloat(salePercent);
-                          const clamped =
-                            Number.isFinite(percent) && percent > 0 && percent <= 100
-                              ? percent
-                              : 0;
-                          next[index] = {
-                            ...variant,
-                            compareAtPrice: formatMoney(original),
-                            price: formatMoney(original * (1 - clamped / 100)),
-                          };
-                        } else {
-                          next[index] = { ...variant, price: e.target.value };
-                        }
-                        setVariants(next);
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{onSale ? "Sale price" : "Compare at"}</Label>
-                    <Input
-                      value={onSale ? variant.price : variant.compareAtPrice}
-                      onChange={(e) => {
-                        if (onSale) return;
-                        const next = [...variants];
-                        next[index] = { ...variant, compareAtPrice: e.target.value };
-                        setVariants(next);
-                      }}
-                      readOnly={onSale}
-                      disabled={onSale}
-                      placeholder={onSale ? undefined : "Optional original price"}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {onSale
-                        ? salePercent
-                          ? `${salePercent}% off — storefront shows original crossed out and this sale price.`
-                          : "Enter a discount % above to calculate the sale price."
-                        : "Optional higher price shown crossed out (sale / was price)."}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>SKU</Label>
-                    <Input
-                      value={variant.sku}
-                      onChange={(e) => {
-                        const next = [...variants];
-                        next[index] = { ...variant, sku: e.target.value };
-                        setVariants(next);
-                      }}
-                      placeholder="Optional stock code"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Optional stock-keeping code for warehouse / inventory tracking.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={variant.quantity}
-                      onChange={(e) => {
-                        const next = [...variants];
-                        next[index] = { ...variant, quantity: e.target.value };
-                        setVariants(next);
-                      }}
-                    />
-                  </div>
+                    </select>
+                  ) : (
+                    <Input id={`size-${index}`} value={variant.optionValue} disabled />
+                  )}
                 </div>
-              );
-            })}
+                <div className="space-y-2">
+                  <Label>{onSale ? "Original price" : "Price"}</Label>
+                  <Input
+                    value={onSale ? variant.compareAtPrice || variant.price : variant.price}
+                    onChange={(e) => {
+                      const next = [...variants];
+                      if (onSale) {
+                        const original = parseMoney(e.target.value);
+                        const percent = Number.parseFloat(salePercent);
+                        const clamped =
+                          Number.isFinite(percent) && percent > 0 && percent <= 100
+                            ? percent
+                            : 0;
+                        next[index] = {
+                          ...variant,
+                          compareAtPrice: formatMoney(original),
+                          price: formatMoney(original * (1 - clamped / 100)),
+                        };
+                      } else {
+                        next[index] = { ...variant, price: e.target.value };
+                      }
+                      setVariants(next);
+                    }}
+                  />
+                </div>
+                {onSale && (
+                  <div className="space-y-2">
+                    <Label>Sale price</Label>
+                    <Input value={variant.price} readOnly disabled />
+                    <p className="text-xs text-muted-foreground">
+                      {salePercent
+                        ? `${salePercent}% off — storefront shows original crossed out and this sale price.`
+                        : "Enter a discount % above to calculate the sale price."}
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor={`product-id-${index}`}>Product ID</Label>
+                  <Input
+                    id={`product-id-${index}`}
+                    value={variant.sku}
+                    onChange={(e) => {
+                      const next = [...variants];
+                      next[index] = { ...variant, sku: e.target.value };
+                      setVariants(next);
+                    }}
+                    placeholder="Optional product ID"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional ID for warehouse / inventory tracking.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`qty-${index}`}>Quantity</Label>
+                  <Input
+                    id={`qty-${index}`}
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={variant.quantity}
+                    onChange={(e) => {
+                      const next = [...variants];
+                      next[index] = { ...variant, quantity: e.target.value };
+                      setVariants(next);
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
             {isNew && (
               <Button
                 type="button"

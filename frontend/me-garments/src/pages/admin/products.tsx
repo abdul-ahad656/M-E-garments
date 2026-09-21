@@ -35,6 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { isLowStock, LOW_STOCK_THRESHOLD, lowStockLabel } from "@/lib/inventory-alerts";
 import { AdminLayout } from "./layout";
 
 function hasTag(tags: string[], tag: string): boolean {
@@ -532,6 +533,12 @@ export default function AdminProductsPage() {
                         <span className="text-sm text-muted-foreground">
                           qty {product.totalInventory}
                         </span>
+                        {isLowStock(product.totalInventory) && (
+                          <Badge variant="destructive">
+                            {lowStockLabel(product.totalInventory) ||
+                              `Low stock (≤${LOW_STOCK_THRESHOLD})`}
+                          </Badge>
+                        )}
                         {busyId === product.id && <Spinner className="h-4 w-4" />}
                       </div>
                     </div>
