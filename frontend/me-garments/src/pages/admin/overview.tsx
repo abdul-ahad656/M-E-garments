@@ -185,7 +185,7 @@ export default function AdminOverviewPage() {
           <div>
             <h2 className="font-serif text-2xl font-semibold">Analytics snapshot</h2>
             <p className="text-sm text-muted-foreground">
-              Counts from recorded analytics_events only.
+              Live storefront events and order totals.
             </p>
           </div>
           {analytics.data && (
@@ -205,9 +205,13 @@ export default function AdminOverviewPage() {
                 detail="Counts reflect stored event rows only"
               />
               <MetricCard
-                label="Data source"
-                value="Supabase"
-                detail="No modeled or estimated values"
+                label="Orders"
+                value={analytics.data.storeMetrics?.totalOrders ?? 0}
+                detail={
+                  analytics.data.storeMetrics
+                    ? `${analytics.data.storeMetrics.paidOrders} paid · ${analytics.data.storeMetrics.uniqueCustomers} customers`
+                    : "From the orders table"
+                }
               />
             </div>
           )}
@@ -216,7 +220,7 @@ export default function AdminOverviewPage() {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Analytics unavailable</AlertTitle>
               <AlertDescription>
-                No analytics values are being inferred or substituted.
+                Analytics could not be loaded. Please refresh and try again.
               </AlertDescription>
             </Alert>
           )}

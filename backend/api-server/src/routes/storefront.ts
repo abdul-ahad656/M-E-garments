@@ -15,9 +15,47 @@ import {
   searchProducts,
   CommerceNotFoundError,
 } from "../lib/commerce-repository";
+import { recordAnalyticsEvent } from "../lib/admin-repository";
 import { isAiAvailable } from "../lib/ai-status";
 
 const router: IRouter = Router();
+
+router.post("/storefront/analytics", async (req, res): Promise<void> => {
+  const body = req.body as {
+    eventName?: unknown;
+    sessionId?: unknown;
+    path?: unknown;
+    properties?: unknown;
+  };
+  const eventName =
+    typeof body.eventName === "string" ? body.eventName.trim() : "";
+  if (!eventName || eventName.length > 100) {
+    res.status(400).json({
+      error: "Invalid analytics event.",
+      code: "INVALID_EVENT",
+    });
+    return;
+  }
+
+  try {
+    await recordAnalyticsEvent({
+      eventName,
+      sessionId: typeof body.sessionId === "string" ? body.sessionId : null,
+      path: typeof body.path === "string" ? body.path : null,
+      properties:
+        body.properties &&
+        typeof body.properties === "object" &&
+        !Array.isArray(body.properties)
+          ? (body.properties as Record<string, unknown>)
+          : {},
+    });
+    res.status(204).end();
+  } catch (error) {
+    req.log.error({ err: error }, "Analytics event recording failed");
+    // Never break the storefront for analytics failures.
+    res.status(204).end();
+  }
+});
 
 router.get("/storefront/status", async (_req, res) => {
   const ready = await isCommerceReady();

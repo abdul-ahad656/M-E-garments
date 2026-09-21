@@ -1226,7 +1226,16 @@ components:
         unavailableMetrics:
           type: array
           items: { type: string }
-      required: [recordedEvents, firstRecordedAt, lastRecordedAt, events, unavailableMetrics]
+        storeMetrics:
+          type: object
+          properties:
+            totalOrders: { type: integer, minimum: 0 }
+            paidOrders: { type: integer, minimum: 0 }
+            paidRevenue: { type: number, minimum: 0 }
+            uniqueCustomers: { type: integer, minimum: 0 }
+            currency: { type: string }
+          required: [totalOrders, paidOrders, paidRevenue, uniqueCustomers, currency]
+      required: [recordedEvents, firstRecordedAt, lastRecordedAt, events, unavailableMetrics, storeMetrics]
     AdminProductSummary:
       type: object
       properties:

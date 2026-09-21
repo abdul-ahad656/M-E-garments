@@ -108,6 +108,29 @@ export async function recordStaffAccessChange(input: {
   });
 }
 
+export async function recordAnalyticsEvent(input: {
+  eventName: string;
+  sessionId?: string | null;
+  authUserId?: string | null;
+  path?: string | null;
+  properties?: Record<string, unknown>;
+}) {
+  const eventName = input.eventName.trim().slice(0, 100);
+  if (!eventName) return;
+
+  await supabaseRequest("analytics_events", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({
+      event_name: eventName,
+      session_id: input.sessionId?.trim().slice(0, 128) || null,
+      auth_user_id: input.authUserId?.trim().slice(0, 128) || null,
+      path: input.path?.trim().slice(0, 500) || null,
+      properties: input.properties ?? {},
+    }),
+  });
+}
+
 export async function getAnalyticsSummary() {
   const rows: Array<{
     event_name: string;
@@ -123,6 +146,33 @@ export async function getAnalyticsSummary() {
   }
   const counts = new Map<string, number>();
   for (const row of rows) counts.set(row.event_name, (counts.get(row.event_name) ?? 0) + 1);
+
+  type OrderMetricRow = {
+    payment_status: string;
+    total: string | number;
+    clerk_user_id: string | null;
+    currency: string | null;
+  };
+  let orders: OrderMetricRow[] = [];
+  try {
+    orders = await supabaseRequest<OrderMetricRow[]>(
+      "orders?select=payment_status,total,clerk_user_id,currency&order=created_at.desc&limit=1000",
+    );
+  } catch {
+    orders = [];
+  }
+
+  const paidOrders = orders.filter((order) => order.payment_status === "paid");
+  const paidRevenue = paidOrders.reduce(
+    (sum, order) => sum + (Number(order.total) || 0),
+    0,
+  );
+  const uniqueCustomers = new Set(
+    orders.map((order) => order.clerk_user_id).filter(Boolean),
+  ).size;
+  const currency =
+    paidOrders[0]?.currency || orders[0]?.currency || "PKR";
+
   return {
     recordedEvents: rows.length,
     firstRecordedAt: rows.at(-1)?.created_at ?? null,
@@ -130,10 +180,13 @@ export async function getAnalyticsSummary() {
     events: [...counts.entries()]
       .map(([eventName, count]) => ({ eventName, count }))
       .sort((a, b) => b.count - a.count),
-    unavailableMetrics: [
-      "Revenue attribution",
-      "Conversion rate",
-      "Unique visitors",
-    ],
+    unavailableMetrics: [] as string[],
+    storeMetrics: {
+      totalOrders: orders.length,
+      paidOrders: paidOrders.length,
+      paidRevenue: Math.round(paidRevenue * 100) / 100,
+      uniqueCustomers,
+      currency,
+    },
   };
 }

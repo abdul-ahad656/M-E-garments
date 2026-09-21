@@ -7,6 +7,18 @@
  */
 import type { AnalyticsEventCount } from './analyticsEventCount';
 
+export interface AdminAnalyticsStoreMetrics {
+  /** @minimum 0 */
+  totalOrders: number;
+  /** @minimum 0 */
+  paidOrders: number;
+  /** @minimum 0 */
+  paidRevenue: number;
+  /** @minimum 0 */
+  uniqueCustomers: number;
+  currency: string;
+}
+
 export interface AdminAnalytics {
   /** @minimum 0 */
   recordedEvents: number;
@@ -16,4 +28,5 @@ export interface AdminAnalytics {
   lastRecordedAt: Date | null;
   events: AnalyticsEventCount[];
   unavailableMetrics: string[];
+  storeMetrics: AdminAnalyticsStoreMetrics;
 }

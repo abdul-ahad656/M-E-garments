@@ -104,7 +104,14 @@ describe("staff admin API", () => {
       firstRecordedAt: "2026-09-09T10:00:00.000Z",
       lastRecordedAt: "2026-09-09T11:00:00.000Z",
       events: [{ eventName: "product_viewed", count: 2 }],
-      unavailableMetrics: ["Revenue attribution", "Conversion rate", "Unique visitors"],
+      unavailableMetrics: [],
+      storeMetrics: {
+        totalOrders: 1,
+        paidOrders: 1,
+        paidRevenue: 2500,
+        uniqueCustomers: 1,
+        currency: "PKR",
+      },
     });
 
     const response = await fetch(`${baseUrl}/api/admin/analytics`);

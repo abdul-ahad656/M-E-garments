@@ -918,7 +918,14 @@ export const GetAdminAnalyticsResponse = zod.object({
   "eventName": zod.string(),
   "count": zod.number().int().min(getAdminAnalyticsResponseEventsItemCountMin)
 })),
-  "unavailableMetrics": zod.array(zod.string())
+  "unavailableMetrics": zod.array(zod.string()),
+  "storeMetrics": zod.object({
+    "totalOrders": zod.number().int().min(0),
+    "paidOrders": zod.number().int().min(0),
+    "paidRevenue": zod.number().min(0),
+    "uniqueCustomers": zod.number().int().min(0),
+    "currency": zod.string(),
+  }),
 })
 
 

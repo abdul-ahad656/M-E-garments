@@ -11,6 +11,7 @@ import { ShoppingBag, PackageCheck, ShieldCheck, ChevronRight } from "lucide-rea
 import { ErrorState, ReadinessState } from "@/components/readiness-state";
 import { cn } from "@/lib/utils";
 import { FavoriteButton } from "@/components/favorite-button";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Product() {
   const { handle } = useParams<{ handle: string }>();
@@ -27,6 +28,14 @@ export default function Product() {
   saveRecentlyViewedRef.current = saveRecentlyViewed.mutate;
   const viewedRecorded = useRef<string | null>(null);
   const inFlight = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!product?.handle) return;
+    trackEvent("product_viewed", {
+      handle: product.handle,
+      productId: product.id,
+    });
+  }, [product?.id, product?.handle]);
 
   useEffect(() => {
     const productId = product?.id;
@@ -86,9 +95,13 @@ export default function Product() {
   }, [matchedVariant]);
 
   const handleAddToCart = () => {
-    if (!matchedVariant) return;
+    if (!matchedVariant || !product) return;
     setIsAdding(true);
     const currentCartId = getCartId();
+    trackEvent("add_to_cart", {
+      handle: product.handle,
+      variantId: matchedVariant.id,
+    });
 
     if (currentCartId) {
       addCartLine.mutate({

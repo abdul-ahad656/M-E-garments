@@ -148,6 +148,18 @@ export interface AnalyticsEventCount {
   count: number;
 }
 
+export interface AdminAnalyticsStoreMetrics {
+  /** @minimum 0 */
+  totalOrders: number;
+  /** @minimum 0 */
+  paidOrders: number;
+  /** @minimum 0 */
+  paidRevenue: number;
+  /** @minimum 0 */
+  uniqueCustomers: number;
+  currency: string;
+}
+
 export interface AdminAnalytics {
   /** @minimum 0 */
   recordedEvents: number;
@@ -157,6 +169,7 @@ export interface AdminAnalytics {
   lastRecordedAt: string | null;
   events: AnalyticsEventCount[];
   unavailableMetrics: string[];
+  storeMetrics: AdminAnalyticsStoreMetrics;
 }
 
 export type AdminProductSummaryStatus = typeof AdminProductSummaryStatus[keyof typeof AdminProductSummaryStatus];
