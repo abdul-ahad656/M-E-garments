@@ -38,7 +38,8 @@ const queryClient = new QueryClient({
   },
 });
 
-import { AuthProvider, LoginPage, SignInPage, SignUpPage } from '@/components/layout/auth-provider';
+import { AuthProvider } from '@/components/layout/auth-provider';
+import { LoginPage, SignInPage, SignUpPage } from '@/pages/login';
 
 function Router() {
   return (

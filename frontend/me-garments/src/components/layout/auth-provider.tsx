@@ -1,11 +1,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useSignUp } from '@clerk/react';
+import { ClerkProvider, useAuth, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
-import { useLocation, useSearch } from 'wouter';
+import { useLocation } from 'wouter';
 import { useQueryClient } from "@tanstack/react-query";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
-import { trackEvent } from "@/lib/analytics";
 
 const clerkEnvKey = (
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
@@ -48,10 +47,10 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-card rounded-2xl w-[440px] max-w-full overflow-hidden border border-border shadow-lg",
+    cardBox: "bg-transparent w-full max-w-md overflow-visible border-0 shadow-none",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none border-t border-border",
-    headerTitle: "text-2xl font-serif font-bold text-foreground",
+    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    headerTitle: "text-4xl font-serif font-bold text-foreground",
     headerSubtitle: "text-muted-foreground text-sm",
     socialButtonsBlockButtonText: "text-foreground font-medium",
     formFieldLabel: "text-foreground font-medium",
@@ -63,8 +62,8 @@ const clerkAppearance = {
     alertText: "text-destructive font-medium",
     logoBox: "mb-6 flex justify-center items-center h-12",
     logoImage: "h-8 w-auto object-contain",
-    socialButtonsBlockButton: "border border-border hover:bg-secondary transition-colors",
-    formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm transition-all",
+    socialButtonsBlockButton: "border border-border hover:bg-secondary transition-colors rounded-lg",
+    formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm transition-all rounded-lg",
     formFieldInput: "border border-border rounded-lg bg-background text-foreground h-10 px-3",
     footerAction: "py-4",
     dividerLine: "bg-border",
@@ -74,81 +73,6 @@ const clerkAppearance = {
     main: "flex flex-col gap-4",
   },
 };
-
-function sanitizeRedirectUrl(url: string | null): string {
-  if (!url) return `${basePath}/account`;
-  if (url.startsWith('/') && !url.startsWith('//')) return url;
-  return `${basePath}/account`;
-}
-
-function AuthFormShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background px-4 py-8">
-      {children}
-    </div>
-  );
-}
-
-export function LoginPage() {
-  const search = useSearch();
-  const searchParams = new URLSearchParams(search);
-  const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
-
-  return (
-    <AuthFormShell>
-      <SignIn
-        routing="path"
-        path={`${basePath}/login`}
-        signUpUrl={`${basePath}/sign-up`}
-        fallbackRedirectUrl={redirectUrl}
-      />
-    </AuthFormShell>
-  );
-}
-
-export function SignInPage() {
-  const search = useSearch();
-  const searchParams = new URLSearchParams(search);
-  const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
-
-  return (
-    <AuthFormShell>
-      <SignIn
-        routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-        fallbackRedirectUrl={redirectUrl}
-      />
-    </AuthFormShell>
-  );
-}
-
-export function SignUpPage() {
-  const search = useSearch();
-  const searchParams = new URLSearchParams(search);
-  const redirectUrl = sanitizeRedirectUrl(searchParams.get('redirect_url'));
-
-  return (
-    <AuthFormShell>
-      <SignUpSuccessTracker />
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/login`} fallbackRedirectUrl={redirectUrl} />
-    </AuthFormShell>
-  );
-}
-
-function SignUpSuccessTracker() {
-  const { signUp } = useSignUp();
-  const trackedRef = useRef(false);
-
-  useEffect(() => {
-    if (signUp?.status === "complete" && !trackedRef.current) {
-      trackedRef.current = true;
-      trackEvent("sign_up_completed", { source: "sign_up_page" });
-    }
-  }, [signUp?.status]);
-
-  return null;
-}
 
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();

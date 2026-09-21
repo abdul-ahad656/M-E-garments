@@ -9,9 +9,7 @@ import { useAssistantWidget } from "@/components/assistant-widget";
 const CATEGORIES: {
   href: string;
   label: string;
-  image?: string;
-  featured?: boolean;
-  hanger?: boolean;
+  image: string;
 }[] = [
   {
     href: "/boys",
@@ -27,12 +25,6 @@ const CATEGORIES: {
     href: "/new-arrivals",
     label: "New Arrivals",
     image: "/avatars/new-arrivals-child.png?v=tracksuit",
-  },
-  {
-    href: "/sale",
-    label: "Sale",
-    featured: true,
-    hanger: true,
   },
 ];
 
@@ -318,47 +310,23 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
             {CATEGORIES.map((category) => (
               <Link
                 key={category.href}
                 href={category.href}
                 className="group block rounded-[1.75rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <article
-                  className={
-                    category.featured
-                      ? "relative flex aspect-square items-center justify-center overflow-hidden rounded-[1.75rem] bg-primary text-primary-foreground shadow-[0_10px_30px_-18px_rgba(217,4,41,0.55)] transition-transform duration-300 group-hover:-translate-y-1.5"
-                      : "relative aspect-square overflow-hidden rounded-[1.75rem] bg-[#F0E8DD] transition-transform duration-300 group-hover:-translate-y-1.5"
-                  }
-                >
-                  {category.image && (
-                    <img
-                      src={category.image}
-                      alt=""
-                      className="absolute inset-x-0 bottom-0 h-[92%] w-full object-contain object-bottom transition-transform duration-700 group-hover:scale-105"
-                    />
-                  )}
-                  {category.hanger && (
-                    <HangerIcon
-                      className={
-                        category.featured
-                          ? "absolute right-5 top-5 h-8 w-10 text-white/80"
-                          : "absolute right-5 top-5 h-8 w-10 text-primary/35"
-                      }
-                    />
-                  )}
-                  {category.featured && (
-                    <span className="relative z-10 font-serif text-3xl font-bold tracking-tight md:text-4xl">
-                      {category.label}
-                    </span>
-                  )}
+                <article className="relative aspect-square overflow-hidden rounded-[1.75rem] bg-[#F0E8DD] transition-transform duration-300 group-hover:-translate-y-1.5">
+                  <img
+                    src={category.image}
+                    alt=""
+                    className="absolute inset-x-0 bottom-0 h-[92%] w-full object-contain object-bottom transition-transform duration-700 group-hover:scale-105"
+                  />
                 </article>
-                {!category.featured && (
-                  <p className="mt-3 text-center text-sm font-medium text-foreground">
-                    {category.label}
-                  </p>
-                )}
+                <p className="mt-3 text-center text-sm font-medium text-foreground">
+                  {category.label}
+                </p>
               </Link>
             ))}
           </div>
